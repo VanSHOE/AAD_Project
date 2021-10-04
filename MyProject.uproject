@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "4.27",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "MyProject",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"Text3D"
+			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "Text3D",
+			"Enabled": true
+		}
+	]
+}
