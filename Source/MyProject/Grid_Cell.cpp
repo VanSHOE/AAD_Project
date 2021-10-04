@@ -18,17 +18,17 @@ AGrid_Cell::AGrid_Cell()
 	Text = CreateDefaultSubobject<UText3DComponent>(TEXT("Text"));
 	Text->SetupAttachment(RootComponent);
 
-	Wall_0 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wall_0"));
-	Wall_0->SetupAttachment(RootComponent);
+	Wall_pY = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wall_pY"));
+	Wall_pY->SetupAttachment(RootComponent);
 
-	Wall_1 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wall_1"));
-	Wall_1->SetupAttachment(RootComponent);
+	Wall_nX = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wall_nX"));
+	Wall_nX->SetupAttachment(RootComponent);
 
-	Wall_2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wall_2"));
-	Wall_2->SetupAttachment(RootComponent);
+	Wall_pX = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wall_pX"));
+	Wall_pX->SetupAttachment(RootComponent);
 
-	Wall_3 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wall_3"));
-	Wall_3->SetupAttachment(RootComponent);
+	Wall_nY = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Wall_nY"));
+	Wall_nY->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned

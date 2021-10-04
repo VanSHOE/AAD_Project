@@ -24,16 +24,16 @@ public:
 		class UText3DComponent* Text;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridCell")
-		class UStaticMeshComponent* Wall_0; // Front Wall
+		class UStaticMeshComponent* Wall_pX; // Front Wall
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridCell")
-		class UStaticMeshComponent* Wall_1; // Right Wall
+		class UStaticMeshComponent* Wall_nX; // Right Wall
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridCell")
-		class UStaticMeshComponent* Wall_2; // Left Wall
+		class UStaticMeshComponent* Wall_pY; // Left Wall
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridCell")
-		class UStaticMeshComponent* Wall_3; // Back Wall
+		class UStaticMeshComponent* Wall_nY; // Back Wall
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

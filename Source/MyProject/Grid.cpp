@@ -73,11 +73,21 @@ void AGrid::Tick(float DeltaTime)
 			build = false;
 			return;
 		}
-		grid3d[i][j++] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		grid3d[i][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		if (j == size_x - 1)
+		{
+			grid3d[i][j]->Wall_pX->ToggleVisibility();
+		}
+		if (i == size_y - 1)
+		{
+			grid3d[i][j]->Wall_pY->ToggleVisibility();
+		}
+		j++;
 		SpawnPosition.X += 400;
 		UE_LOG(LogTemp, Warning, TEXT("%d/%d %d/%d"), i, size_y,j, size_x);
 	}
 	if (build) return;
+
 	if (q >= size_x)
 	{
 		p++;
@@ -88,8 +98,13 @@ void AGrid::Tick(float DeltaTime)
 		q = p = 0;
 		return;
 	}
+
 	FString send = send.FromInt(cur++);
 	FText fin = fin.FromString(send);
+	auto mat = grid3d[p][q]->Text->FrontMaterial->GetMaterial();
+	auto dyn = UMaterialInstanceDynamic::Create(mat, NULL);
+	dyn->SetScalarParameterValue(TEXT("Blend"), 1);
+	grid3d[p][q]->Text->SetFrontMaterial(dyn);
 	grid3d[p][q++]->Text->SetText(fin);
 
 }
