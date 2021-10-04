@@ -3,6 +3,7 @@
 
 #include "Changeee.h"
 #include "Text3DComponent.h"
+#include "GauntletTestController.h"
 // Sets default values for this component's properties
 UChangeee::UChangeee()
 {
