@@ -4,6 +4,9 @@
 #include "Grid.h"
 #include "Text3DComponent.h"
 #include <stdlib.h>
+#if WITH_EDITOR
+#include "UnrealEd.h"
+#endif
 // Sets default values
 AGrid::AGrid()
 {
@@ -14,7 +17,7 @@ AGrid::AGrid()
 double last = 0;
 int p = 0;
 int q = 0;
-int i = 0;
+int I = 0;
 int j = 0;
 int cur = 1;
 FVector SpawnPosition;
@@ -27,7 +30,7 @@ void AGrid::BeginPlay()
 	Super::BeginPlay();
 	p = 0;
 	q = 0;
-	i = 0;
+	I = 0;
 	j = 0;
 	cur = 1;
 	last = 0;
@@ -54,10 +57,14 @@ void AGrid::BeginPlay()
 // Called every frame
 int required = 0;
 int sort_step = 0;
+int mini = 0;
 void AGrid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	//UE_LOG(LogTemp, Warning, TEXT("%d %d"), p, q);
+
+
+
 
 	last += DeltaTime;
 	if (last < delay)
@@ -65,6 +72,10 @@ void AGrid::Tick(float DeltaTime)
 		return;
 	}
 	last = 0;
+	//bool retflag;
+	//BubbleSort(retflag);
+	//if (retflag) return;
+
 	if (cur_step == -1)
 	{
 		if (next || AUTO)
@@ -78,11 +89,11 @@ void AGrid::Tick(float DeltaTime)
 		if (j >= size_x)
 		{
 			j = 0;
-			i++;
+			I++;
 			SpawnPosition.Y += 400;
 			SpawnPosition.X = 0;
 		}
-		if (i >= size_y)
+		if (I >= size_y)
 		{
 			if (next || AUTO)
 			{
@@ -91,20 +102,111 @@ void AGrid::Tick(float DeltaTime)
 			}
 			return;
 		}
-		grid3d[i][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-		grid[i][j] = rand() % (size_x * size_y) + 1;
-		grid3d[i][j]->Text->SetText(FText::FromString(FString::FromInt(grid[i][j])));
+		grid3d[I][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		grid[I][j] = rand() % (size_x * size_y) + 1;
+		grid3d[I][j]->Text->SetText(FText::FromString(FString::FromInt(grid[I][j])));
 		if (j == size_x - 1)
 		{
-			grid3d[i][j]->Wall_pX->ToggleVisibility();
+			grid3d[I][j]->Wall_pX->ToggleVisibility();
 		}
-		if (i == size_y - 1)
+		if (I == size_y - 1)
 		{
-			grid3d[i][j]->Wall_pY->ToggleVisibility();
+			grid3d[I][j]->Wall_pY->ToggleVisibility();
 		}
 		j++;
 		SpawnPosition.X += 400;
-		
+
+	}
+	else if (cur_step == 1)
+	{
+		if (!AUTO) pause();
+		if (q >= size_x)
+		{
+			int tp = grid[0][mini];
+			grid[0][mini] = grid[0][p];
+			grid[0][p] = tp;
+			grid3d[0][p]->Text->SetText(FText::FromString(FString::FromInt(grid[0][p])));
+			text_color(0, p, 0);
+			text_color(0, mini, 0);
+			grid3d[0][mini]->Text->SetText(FText::FromString(FString::FromInt(grid[0][mini])));
+			p++;
+			mini = p;
+			text_color(0, mini, 2);
+			q = p + 1;
+		}
+		if (p >= size_x - 1)
+		{
+			cur_step = -2;
+			return;
+		}
+		text_color(0, q, 1);
+		UE_LOG(LogTemp, Warning, TEXT("Red? %d"), q);
+		if (!AUTO) pause();
+		if (grid[0][q] < grid[0][mini])
+		{
+			text_color(0, mini, 0);
+			mini = q;
+			text_color(0, mini, 2);
+		}
+		else text_color(0, q, 0);
+		UE_LOG(LogTemp, Warning, TEXT("NOO"));
+		q++;
+		if (!AUTO) pause();
+	}
+
+
+
+}
+
+void AGrid::pause()
+{
+	GetWorld()->bDebugPauseExecution = true;
+
+}
+
+void AGrid::BubbleSort(bool& retflag)
+{
+	retflag = true;
+	if (cur_step == -1)
+	{
+		if (next || AUTO)
+		{
+			cur_step++;
+			next = false;
+		}
+	}
+	else if (cur_step == 0)
+	{
+		if (j >= size_x)
+		{
+			j = 0;
+			I++;
+			SpawnPosition.Y += 400;
+			SpawnPosition.X = 0;
+		}
+		if (I >= size_y)
+		{
+			if (next || AUTO)
+			{
+				cur_step++;
+				next = false;
+			}
+			return;
+		}
+		grid3d[I][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		grid[I][j] = rand() % (size_x * size_y) + 1;
+		grid3d[I][j]->Text->SetText(FText::FromString(FString::FromInt(grid[I][j])));
+		if (j == size_x - 1)
+		{
+			grid3d[I][j]->Wall_pX->ToggleVisibility();
+		}
+		if (I == size_y - 1)
+		{
+			grid3d[I][j]->Wall_pY->ToggleVisibility();
+		}
+		j++;
+		SpawnPosition.X += 400;
+
 	}
 	else if (cur_step == 1)
 	{
@@ -146,9 +248,9 @@ void AGrid::Tick(float DeltaTime)
 			text_color(0, q + 1, 3);
 		}
 		else text_color(0, q + 1, 0);
-		
 		q++;
 	}
+	retflag = false;
 }
 
 void AGrid::text_color(int c, int r, int col)
@@ -159,12 +261,14 @@ void AGrid::text_color(int c, int r, int col)
 	{
 		dyn->SetScalarParameterValue(TEXT("Blend1"), col);
 		dyn->SetScalarParameterValue(TEXT("Blend2"), 0);
+		UE_LOG(LogTemp, Warning, TEXT("Should be %d"), col);
 	}
 	else
 	{
 		dyn->SetScalarParameterValue(TEXT("Blend1"), 0);
 		dyn->SetScalarParameterValue(TEXT("Blend2"), 1);
-	}
+		UE_LOG(LogTemp, Warning, TEXT("Should be green"));
+	}	
 	grid3d[c][r]->Text->SetFrontMaterial(dyn);
 }
 
