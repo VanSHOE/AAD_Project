@@ -19,6 +19,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGrid_Cell> CellBP;
 	std::vector<std::vector<AGrid_Cell*>> grid3d;
+	std::vector<std::vector<int>> grid;
 	UPROPERTY(EditAnywhere)
 		double delay;
 protected:
@@ -32,5 +33,11 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool next = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool AUTO = false;
+	void text_color(int c, int r, int col);
+	UPROPERTY(VisibleAnywhere)
+	int cur_step = 0;
 };

@@ -3,12 +3,13 @@
 
 #include "Grid.h"
 #include "Text3DComponent.h"
+#include <stdlib.h>
 // Sets default values
 AGrid::AGrid()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	srand(time(0));
 }
 double last = 0;
 int p = 0;
@@ -18,8 +19,9 @@ int j = 0;
 int cur = 1;
 FVector SpawnPosition;
 FActorSpawnParameters SpawnParamenters;
-bool build = true;
+
 // Called when the game starts or when spawned
+
 void AGrid::BeginPlay()
 {
 	Super::BeginPlay();
@@ -29,9 +31,11 @@ void AGrid::BeginPlay()
 	j = 0;
 	cur = 1;
 	last = 0;
-	build = true;
+	next = false;
+	cur_step = -1;
 	//std::vector<std::vector<uint32>> grid(size_y, std::vector<uint32>(size_x, 0));
 	grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x));
+	grid.assign(size_y, std::vector<int>(size_x));
 	SpawnParamenters.Owner = this;
 	SpawnPosition = GetActorLocation();
 	SpawnPosition.X = 0;
@@ -48,18 +52,28 @@ void AGrid::BeginPlay()
 }
 
 // Called every frame
-
+int required = 0;
+int sort_step = 0;
 void AGrid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	//UE_LOG(LogTemp, Warning, TEXT("%d %d"), p, q);
+
 	last += DeltaTime;
 	if (last < delay)
 	{
 		return;
 	}
 	last = 0;
-	if (build)
+	if (cur_step == -1)
+	{
+		if (next || AUTO)
+		{
+			cur_step++;
+			next = false;
+		}
+	}
+	else if (cur_step == 0)
 	{
 		if (j >= size_x)
 		{
@@ -70,10 +84,16 @@ void AGrid::Tick(float DeltaTime)
 		}
 		if (i >= size_y)
 		{
-			build = false;
+			if (next || AUTO)
+			{
+				cur_step++;
+				next = false;
+			}
 			return;
 		}
 		grid3d[i][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		grid[i][j] = rand() % (size_x * size_y) + 1;
+		grid3d[i][j]->Text->SetText(FText::FromString(FString::FromInt(grid[i][j])));
 		if (j == size_x - 1)
 		{
 			grid3d[i][j]->Wall_pX->ToggleVisibility();
@@ -84,28 +104,88 @@ void AGrid::Tick(float DeltaTime)
 		}
 		j++;
 		SpawnPosition.X += 400;
-		UE_LOG(LogTemp, Warning, TEXT("%d/%d %d/%d"), i, size_y,j, size_x);
+		
 	}
-	if (build) return;
-
-	if (q >= size_x)
+	else if (cur_step == 1)
 	{
-		p++;
-		q = 0;
-	}
-	if (p >= size_y)
-	{
-		q = p = 0;
-		return;
-	}
+		if (sort_step < required)
+		{
+			if (next || AUTO)
+			{
+				sort_step++;
+				next = false;
+			}
+			return;
+		}
+			
 
-	FString send = send.FromInt(cur++);
-	FText fin = fin.FromString(send);
-	auto mat = grid3d[p][q]->Text->FrontMaterial->GetMaterial();
+		if (q >= size_x - p - 1)
+		{
+			p++;
+			if (p > size_y - 1) p = size_y;
+			q = 0;
+		}
+		if (p >= size_y - 1)
+		{
+			if (next || AUTO)
+			{
+				q = p = 0;
+				cur_step++;
+				next = false;
+			}
+			return;
+		}
+		text_color(p, q, 1);
+		text_color(p, q + 1, 1);
+		if (!next && !AUTO) return;
+		if (grid[p][q] > grid[p][q + 1])
+		{
+			int temp = grid[p][q];
+			grid[p][q] = grid[p][q + 1];
+			grid[p][q + 1] = temp;
+			grid3d[p][q]->Text->SetText(FText::FromString(FString::FromInt(grid[p][q])));
+			grid3d[p][q]->Text->SetText(FText::FromString(FString::FromInt(grid[p][q + 1])));
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		//UE_LOG(LogTemp, Warning, TEXT("%d/%d %d/%d"), p, size_y, q, size_x);
+		q++;
+		required++;
+	}
+	else if (cur_step == 2)
+	{
+
+	}
+}
+
+void AGrid::text_color(int c, int r, int col)
+{
+	auto mat = grid3d[c][r]->Text->FrontMaterial->GetMaterial();
 	auto dyn = UMaterialInstanceDynamic::Create(mat, NULL);
-	dyn->SetScalarParameterValue(TEXT("Blend"), 1);
-	grid3d[p][q]->Text->SetFrontMaterial(dyn);
-	grid3d[p][q++]->Text->SetText(fin);
-
+	if (col == 0 || col == 1)
+	{
+		dyn->SetScalarParameterValue(TEXT("Blend1"), col);
+		dyn->SetScalarParameterValue(TEXT("Blend2"), 0);
+	}
+	else
+	{
+		dyn->SetScalarParameterValue(TEXT("Blend1"), 0);
+		dyn->SetScalarParameterValue(TEXT("Blend2"), 1);
+	}
+	grid3d[c][r]->Text->SetFrontMaterial(dyn);
 }
 
