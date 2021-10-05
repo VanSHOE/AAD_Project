@@ -108,67 +108,46 @@ void AGrid::Tick(float DeltaTime)
 	}
 	else if (cur_step == 1)
 	{
-		if (sort_step < required)
-		{
-			if (next || AUTO)
-			{
-				sort_step++;
-				next = false;
-			}
-			return;
-		}
-			
-
+		if (!next && !AUTO) return;
+		next = false;
 		if (q >= size_x - p - 1)
 		{
-			p++;
-			if (p > size_y - 1) p = size_y;
 			q = 0;
+			p++;
 		}
-		if (p >= size_y - 1)
+		if (p >= size_x - 1)
 		{
-			if (next || AUTO)
-			{
-				q = p = 0;
-				cur_step++;
-				next = false;
-			}
+			cur_step = -2;
 			return;
 		}
-		text_color(p, q, 1);
-		text_color(p, q + 1, 1);
-		if (!next && !AUTO) return;
-		if (grid[p][q] > grid[p][q + 1])
-		{
-			int temp = grid[p][q];
-			grid[p][q] = grid[p][q + 1];
-			grid[p][q + 1] = temp;
-			grid3d[p][q]->Text->SetText(FText::FromString(FString::FromInt(grid[p][q])));
-			grid3d[p][q]->Text->SetText(FText::FromString(FString::FromInt(grid[p][q + 1])));
-		}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+		text_color(0, q, 1);
+		text_color(0, q + 1, 1);
+		cur_step = 2; return;
 		//UE_LOG(LogTemp, Warning, TEXT("%d/%d %d/%d"), p, size_y, q, size_x);
-		q++;
-		required++;
+
 	}
 	else if (cur_step == 2)
 	{
+		if (!next && !AUTO) return;
+		next = false;
 
+		if (grid[0][q] > grid[0][q + 1])
+		{
+			int temp = grid[0][q];
+			grid[0][q] = grid[0][q + 1];
+			grid[0][q + 1] = temp;
+			grid3d[0][q]->Text->SetText(FText::FromString(FString::FromInt(grid[0][q])));
+			grid3d[0][q + 1]->Text->SetText(FText::FromString(FString::FromInt(grid[0][q + 1])));
+		}
+		cur_step = 1;
+		text_color(0, q, 0);
+		if (q + 1 == size_x - 1 - p)
+		{
+			text_color(0, q + 1, 3);
+		}
+		else text_color(0, q + 1, 0);
+		
+		q++;
 	}
 }
 
