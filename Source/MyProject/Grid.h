@@ -33,7 +33,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	void pause();
+
 	void BubbleSort(bool& retflag);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool next = false;

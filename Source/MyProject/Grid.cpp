@@ -119,19 +119,23 @@ void AGrid::Tick(float DeltaTime)
 	}
 	else if (cur_step == 1)
 	{
-		if (!AUTO) pause();
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
 		if (q >= size_x)
 		{
 			int tp = grid[0][mini];
 			grid[0][mini] = grid[0][p];
 			grid[0][p] = tp;
 			grid3d[0][p]->Text->SetText(FText::FromString(FString::FromInt(grid[0][p])));
-			text_color(0, p, 0);
 			text_color(0, mini, 0);
+			text_color(0, p, 2);
 			grid3d[0][mini]->Text->SetText(FText::FromString(FString::FromInt(grid[0][mini])));
 			p++;
 			mini = p;
-			text_color(0, mini, 2);
+			text_color(0, mini, 3);
 			q = p + 1;
 		}
 		if (p >= size_x - 1)
@@ -141,26 +145,25 @@ void AGrid::Tick(float DeltaTime)
 		}
 		text_color(0, q, 1);
 		UE_LOG(LogTemp, Warning, TEXT("Red? %d"), q);
-		if (!AUTO) pause();
+		cur_step = 2;
+		return;
+	}
+	else if (cur_step == 2)
+	{
+		if (!next && !AUTO) return;
+		next = false;
 		if (grid[0][q] < grid[0][mini])
 		{
 			text_color(0, mini, 0);
 			mini = q;
-			text_color(0, mini, 2);
+			text_color(0, mini, 3);
 		}
 		else text_color(0, q, 0);
-		UE_LOG(LogTemp, Warning, TEXT("NOO"));
 		q++;
-		if (!AUTO) pause();
+		cur_step = 1;
 	}
 
 
-
-}
-
-void AGrid::pause()
-{
-	GetWorld()->bDebugPauseExecution = true;
 
 }
 
@@ -261,14 +264,22 @@ void AGrid::text_color(int c, int r, int col)
 	{
 		dyn->SetScalarParameterValue(TEXT("Blend1"), col);
 		dyn->SetScalarParameterValue(TEXT("Blend2"), 0);
+		dyn->SetScalarParameterValue(TEXT("Blend3"), 0);
 		UE_LOG(LogTemp, Warning, TEXT("Should be %d"), col);
 	}
-	else
+	else if(col == 2)
 	{
 		dyn->SetScalarParameterValue(TEXT("Blend1"), 0);
 		dyn->SetScalarParameterValue(TEXT("Blend2"), 1);
+		dyn->SetScalarParameterValue(TEXT("Blend3"), 0);
 		UE_LOG(LogTemp, Warning, TEXT("Should be green"));
 	}	
+	else
+	{
+		dyn->SetScalarParameterValue(TEXT("Blend1"), 0);
+		dyn->SetScalarParameterValue(TEXT("Blend2"), 0);
+		dyn->SetScalarParameterValue(TEXT("Blend3"), 1);
+	}
 	grid3d[c][r]->Text->SetFrontMaterial(dyn);
 }
 
