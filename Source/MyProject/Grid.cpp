@@ -15,11 +15,11 @@ AGrid::AGrid()
 	srand(time(0));
 }
 double last = 0;
-int p = 0;
-int q = 0;
+
 int I = 0;
 int j = 0;
 int cur = 1;
+int mid = -1;
 FVector SpawnPosition;
 FActorSpawnParameters SpawnParamenters;
 
@@ -33,10 +33,12 @@ void AGrid::BeginPlay()
 	I = 0;
 	j = 0;
 	cur = 1;
+	mid = -1;
 	last = 0;
 	next = false;
 	cur_step = -1;
 	mini = 0;
+	ToSearch = -1;
 	//std::vector<std::vector<uint32>> grid(size_y, std::vector<uint32>(size_x, 0));
 	grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x));
 	grid.assign(size_y, std::vector<int>(size_x));
@@ -71,15 +73,216 @@ void AGrid::Tick(float DeltaTime)
 		return;
 	}
 	last = 0;
-	//bool retflag;
-	//BubbleSort(retflag);
-	//if (retflag) return;
 	bool retflag;
-	Sel(retflag);
+	//BubbleSort(retflag);
+	//Sel(retflag);
+	//SeqSearch(retflag);
+	 bsearch(retflag);
 	if (retflag) return;
 
 
 
+}
+
+void AGrid::bsearch(bool& retflag)
+{
+	retflag = true;
+
+	if (cur_step == -1)
+	{
+		if (next || AUTO)
+		{
+			cur_step++;
+			next = false;
+		}
+	}
+	else if (cur_step == 0)
+	{
+		if (j >= size_x)
+		{
+			j = 0;
+			I++;
+			SpawnPosition.Y += 400;
+			SpawnPosition.X = 0;
+		}
+		if (I >= size_y)
+		{
+			if (next || AUTO)
+			{
+				cur_step++;
+				next = false;
+			}
+			return;
+		}
+		grid3d[I][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+
+		if (j == 0)
+		{
+			grid[I][j] = -1e7;
+			grid3d[I][j]->Text->SetText(FText::FromString(TEXT("-INF")));
+		}
+		else if (j == 1)
+		{
+			grid[I][j] = rand() % (size_x * size_y) + 1;
+			grid3d[I][j]->Text->SetText(FText::FromString(FString::FromInt(grid[I][j])));
+		}
+		else if (j == size_x - 1)
+		{
+			grid[I][j] = 1e7;
+			grid3d[I][j]->Text->SetText(FText::FromString(TEXT("INF")));
+		}
+		else
+		{
+			grid[I][j] = rand() % (size_x * size_y) + grid[I][j - 1];
+			grid3d[I][j]->Text->SetText(FText::FromString(FString::FromInt(grid[I][j])));
+		}
+		text_color(0, j, 2);
+		if (j == size_x - 1)
+		{
+			grid3d[I][j]->Wall_pX->ToggleVisibility();
+		}
+		if (I == size_y - 1)
+		{
+			grid3d[I][j]->Wall_pY->ToggleVisibility();
+		}
+		j++;
+		SpawnPosition.X += 400;
+		p = 0;
+		q = size_x - 1;
+	}
+	else if (cur_step == 1)
+	{
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
+		if (q - p == 1) // a[q] >= what we want. a[p] < what we want 
+		{
+			cur_step = -2;
+			return;
+		}
+
+		mid = (p + q) / 2;
+		text_color(0, mid, 3);
+		cur_step = 2;
+		return;
+	}
+	else if (cur_step == 2)
+	{
+		if (!next && !AUTO) return;
+		next = false;
+		UE_LOG(LogTemp, Warning, TEXT("%d at %d and we want %d"), grid[0][mid], mid, ToSearch);
+		if (grid[0][mid] == ToSearch)
+		{
+			cur_step = -2;
+			for (int l = 0; l < size_x; l++)
+			{
+				text_color(0, l, 0);
+			}
+			text_color(0, mid, 2);
+			return;
+		}
+		else if (grid[0][mid] < ToSearch)
+		{
+			p = mid;
+			for (int l = 0; l <= p; l++)
+			{
+				text_color(0, l, 0);
+			}
+		}
+		else
+		{
+			q = mid;
+			for (int l = size_x - 1; l >= q; l--)
+			{
+				text_color(0, l, 0);
+			}
+		}
+		cur_step = 1;
+	}
+	retflag = false;
+}
+
+void AGrid::SeqSearch(bool& retflag)
+{
+	retflag = true;
+	if (cur_step == -1)
+	{
+		if (next || AUTO)
+		{
+			cur_step++;
+			next = false;
+		}
+	}
+	else if (cur_step == 0)
+	{
+		if (j >= size_x)
+		{
+			j = 0;
+			I++;
+			SpawnPosition.Y += 400;
+			SpawnPosition.X = 0;
+		}
+		if (I >= size_y)
+		{
+			if (next || AUTO)
+			{
+				cur_step++;
+				next = false;
+			}
+			return;
+		}
+		grid3d[I][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		grid[I][j] = rand() % (size_x * size_y) + 1;
+		grid3d[I][j]->Text->SetText(FText::FromString(FString::FromInt(grid[I][j])));
+		if (j == size_x - 1)
+		{
+			grid3d[I][j]->Wall_pX->ToggleVisibility();
+		}
+		if (I == size_y - 1)
+		{
+			grid3d[I][j]->Wall_pY->ToggleVisibility();
+		}
+		j++;
+		SpawnPosition.X += 400;
+		q = 0;
+	}
+	else if (cur_step == 1)
+	{
+		if (q >= size_x)
+		{
+			cur_step = -2;
+			return;
+		}
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
+		text_color(0, q, 1);
+		cur_step = 2;
+		return;
+	}
+	else if (cur_step == 2)
+	{
+		if (!next && !AUTO) return;
+		next = false;
+
+		if (grid[0][q] == ToSearch)
+		{
+			cur_step = -2;
+			text_color(0, q, 2);
+			return;
+		}
+		else
+		{
+			text_color(0, q, 0);
+		}
+		q++;
+		cur_step = 1;
+	}
+	retflag = false;
 }
 
 void AGrid::Sel(bool& retflag)

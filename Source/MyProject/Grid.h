@@ -34,7 +34,17 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void bsearch(bool& retflag);
+
+	void SeqSearch(bool& retflag);
+
 	void Sel(bool& retflag);
+
+	UPROPERTY(VisibleAnywhere)
+	int p = 0;
+	UPROPERTY(VisibleAnywhere)
+	int q = 0;
+
 
 	void BubbleSort(bool& retflag);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -43,5 +53,7 @@ public:
 		bool AUTO = false;
 	void text_color(int c, int r, int col);
 	UPROPERTY(VisibleAnywhere)
-	int cur_step = 0;
+		int cur_step = 0;
+	UPROPERTY(EditAnywhere)
+		int ToSearch = -1;
 };
