@@ -24,7 +24,7 @@ FVector SpawnPosition;
 FActorSpawnParameters SpawnParamenters;
 
 // Called when the game starts or when spawned
-
+int mini = 0;
 void AGrid::BeginPlay()
 {
 	Super::BeginPlay();
@@ -36,6 +36,7 @@ void AGrid::BeginPlay()
 	last = 0;
 	next = false;
 	cur_step = -1;
+	mini = 0;
 	//std::vector<std::vector<uint32>> grid(size_y, std::vector<uint32>(size_x, 0));
 	grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x));
 	grid.assign(size_y, std::vector<int>(size_x));
@@ -57,13 +58,11 @@ void AGrid::BeginPlay()
 // Called every frame
 int required = 0;
 int sort_step = 0;
-int mini = 0;
+
 void AGrid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	//UE_LOG(LogTemp, Warning, TEXT("%d %d"), p, q);
-
-
 
 
 	last += DeltaTime;
@@ -75,6 +74,17 @@ void AGrid::Tick(float DeltaTime)
 	//bool retflag;
 	//BubbleSort(retflag);
 	//if (retflag) return;
+	bool retflag;
+	Sel(retflag);
+	if (retflag) return;
+
+
+
+}
+
+void AGrid::Sel(bool& retflag)
+{
+	retflag = true;
 
 	if (cur_step == -1)
 	{
@@ -99,6 +109,7 @@ void AGrid::Tick(float DeltaTime)
 			{
 				cur_step++;
 				next = false;
+				text_color(0, 0, 3);
 			}
 			return;
 		}
@@ -115,7 +126,7 @@ void AGrid::Tick(float DeltaTime)
 		}
 		j++;
 		SpawnPosition.X += 400;
-
+		q = 1;
 	}
 	else if (cur_step == 1)
 	{
@@ -126,6 +137,7 @@ void AGrid::Tick(float DeltaTime)
 		next = false;
 		if (q >= size_x)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("A pass is done"))
 			int tp = grid[0][mini];
 			grid[0][mini] = grid[0][p];
 			grid[0][p] = tp;
@@ -144,7 +156,6 @@ void AGrid::Tick(float DeltaTime)
 			return;
 		}
 		text_color(0, q, 1);
-		UE_LOG(LogTemp, Warning, TEXT("Red? %d"), q);
 		cur_step = 2;
 		return;
 	}
@@ -155,6 +166,7 @@ void AGrid::Tick(float DeltaTime)
 		if (grid[0][q] < grid[0][mini])
 		{
 			text_color(0, mini, 0);
+			UE_LOG(LogTemp, Warning, TEXT("%d was mini, now its %d"), mini, q);
 			mini = q;
 			text_color(0, mini, 3);
 		}
@@ -162,9 +174,7 @@ void AGrid::Tick(float DeltaTime)
 		q++;
 		cur_step = 1;
 	}
-
-
-
+	retflag = false;
 }
 
 void AGrid::BubbleSort(bool& retflag)
@@ -260,19 +270,20 @@ void AGrid::text_color(int c, int r, int col)
 {
 	auto mat = grid3d[c][r]->Text->FrontMaterial->GetMaterial();
 	auto dyn = UMaterialInstanceDynamic::Create(mat, NULL);
+	UE_LOG(LogTemp, Warning, TEXT("%d should be %d"), r, col);
 	if (col == 0 || col == 1)
 	{
 		dyn->SetScalarParameterValue(TEXT("Blend1"), col);
 		dyn->SetScalarParameterValue(TEXT("Blend2"), 0);
 		dyn->SetScalarParameterValue(TEXT("Blend3"), 0);
-		UE_LOG(LogTemp, Warning, TEXT("Should be %d"), col);
+		//UE_LOG(LogTemp, Warning, TEXT("Should be %d"), col);
 	}
 	else if(col == 2)
 	{
 		dyn->SetScalarParameterValue(TEXT("Blend1"), 0);
 		dyn->SetScalarParameterValue(TEXT("Blend2"), 1);
 		dyn->SetScalarParameterValue(TEXT("Blend3"), 0);
-		UE_LOG(LogTemp, Warning, TEXT("Should be green"));
+		//UE_LOG(LogTemp, Warning, TEXT("Should be green"));
 	}	
 	else
 	{

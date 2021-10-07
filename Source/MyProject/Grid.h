@@ -34,6 +34,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void Sel(bool& retflag);
+
 	void BubbleSort(bool& retflag);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool next = false;
