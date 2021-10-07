@@ -73,12 +73,12 @@ void AGrid::Tick(float DeltaTime)
 		return;
 	}
 	last = 0;
-	bool retflag;
+	//bool retflag;
 	//BubbleSort(retflag);
 	//Sel(retflag);
 	//SeqSearch(retflag);
-	 bsearch(retflag);
-	if (retflag) return;
+	// bsearch(retflag);
+	//if (retflag) return;
 
 
 
