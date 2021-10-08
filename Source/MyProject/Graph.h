@@ -18,27 +18,31 @@ class MYPROJECT_API AGraph : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AGraph();
+	uint64 min(uint64 a, uint64 b);
+
 	UPROPERTY(EditAnywhere)
-		int size_x;
+		uint64 size_x;
 	UPROPERTY(EditAnywhere)
-		int size_y;
+		uint64 size_y;
 	UPROPERTY(EditAnywhere)
-		int size_z;
+		uint64 size_z;
 	UPROPERTY(EditAnywhere)
-		int nodes;
+		uint64 nodes;
 	UPROPERTY(EditAnywhere)
-		int edges;	
+		uint64 edges;
 	UPROPERTY(EditAnywhere)
 		int DistanceBetweenNodes;
 	UPROPERTY(EditAnywhere)
 		int ProbabilityIn1byX;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGraphNode> Node;
-	int i = 0;
-	int j = 0;
-	int k = 0;
+	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
+		TSubclassOf<AGraphEdge> Edge;
+	uint64 i = 0;
+	uint64 j = 0;
+	uint64 k = 0;
 	std::vector<std::vector<std::vector<AGraphNode*>>> grid3d;
-
+	std::vector<AGraphNode*> Store;
 
 
 protected:

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GraphEdge.h"
 #include <vector>
 #include "GraphNode.generated.h"
 
@@ -15,17 +16,20 @@ class MYPROJECT_API AGraphNode : public AActor
 public:
 	// Sets default values for this actor's properties
 	AGraphNode();
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridCell")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GraphNode")
 		class USceneComponent* RootScene;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridCell")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GraphNode")
 		class UStaticMeshComponent* Sphere;
 	struct edge_to
 	{
-		int x;
-		int y;
-		int z;
+		AGraphEdge* edge;
+		int i;
+		int j;
+		int k;
 	};
-
+	int my_i;
+	int my_j;
+	int my_k;
 	std::vector<edge_to> edges;
 protected:
 	// Called when the game starts or when spawned
