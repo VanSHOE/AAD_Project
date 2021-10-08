@@ -11,7 +11,7 @@
 AGraph::AGraph()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	srand(time(0));
 }
 
@@ -129,9 +129,6 @@ void AGraph::Tick(float DeltaTime)
 		FVector dir = Tarloc - Myloc;
 		FRotator pointTo = dir.Rotation();
 		
-
-
-
 		UE_LOG(LogTemp, Warning, TEXT("Between %s and %s, vector is %s, rotator is %s"), *Store[i]->GetName(), *Store[j]->GetName(), *dir.ToString(), *pointTo.ToString());
 		q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
 		FVector scale = { 1,1,dir.Size() };
@@ -144,9 +141,7 @@ void AGraph::Tick(float DeltaTime)
 		q.j = Store[i]->my_j;
 		q.k = Store[i]->my_k;
 		Store[i]->edges.push_back(q);
-		
 		j++;
-		
 	}
 
 
