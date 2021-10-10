@@ -22,6 +22,9 @@ public:
 	std::vector<std::vector<int>> grid;
 	UPROPERTY(EditAnywhere)
 		double delay;
+
+	UPROPERTY(EditAnywhere)
+		uint64 space_left = 500;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -29,7 +32,8 @@ protected:
 		uint64 size_x = 100;
 	UPROPERTY(EditAnywhere)
 		uint64 size_y = 100;
-
+	UPROPERTY(VisibleAnywhere)
+		double total_value = 0;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -40,9 +44,9 @@ public:
 
 	void Sel(bool& retflag);
 
-	UPROPERTY(VisibleAnywhere)
+	//UPROPERTY(VisibleAnywhere)
 	int p = 0;
-	UPROPERTY(VisibleAnywhere)
+	//UPROPERTY(VisibleAnywhere)
 	int q = 0;
 
 
@@ -54,6 +58,6 @@ public:
 	void text_color(int c, int r, int col);
 	UPROPERTY(VisibleAnywhere)
 		int cur_step = 0;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int ToSearch = -1;
 };

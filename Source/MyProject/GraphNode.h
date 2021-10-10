@@ -19,7 +19,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GraphNode")
 		class USceneComponent* RootScene;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GraphNode")
+		class USceneComponent* TextScene;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GraphNode")
 		class UStaticMeshComponent* Sphere;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridCell")
+		class UText3DComponent* Text;
+
+	APawn* player = nullptr;
 	struct edge_to
 	{
 		AGraphEdge* edge;

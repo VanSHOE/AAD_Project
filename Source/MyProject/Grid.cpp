@@ -11,7 +11,7 @@
 AGrid::AGrid()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	srand(time(0));
 }
 double last = 0;
@@ -73,14 +73,122 @@ void AGrid::Tick(float DeltaTime)
 		return;
 	}
 	last = 0;
-	bool retflag;
+	//bool retflag;
 	//BubbleSort(retflag);
-	Sel(retflag);
+	//Sel(retflag);
 	//SeqSearch(retflag);
 	// bsearch(retflag);
-	if (retflag) return;
+	//if (retflag) return;
+	if (cur_step == -1)
+	{
+		if (next || AUTO)
+		{
+			cur_step++;
+			next = false;
+		}
+	}
+	else if (cur_step == 0)
+	{
+		if (j >= size_x)
+		{
+			j = 0;
+			I++;
+			SpawnPosition.Y += 400;
+			SpawnPosition.X = 0;
+		}
+		if (I >= size_y)
+		{
+			cur_step++;
+			I = j = 0;
+			return;
+		}
+		grid3d[I][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		if (j == size_x - 1)
+		{
+			grid3d[I][j]->Wall_pX->ToggleVisibility();
+		}
+		if (I == size_y - 1)
+		{
+			grid3d[I][j]->Wall_pY->ToggleVisibility();
+		}
 
-
+		grid3d[I][j]->Text->SetText(FText::FromString(TEXT(" ")));
+		j++;
+		SpawnPosition.X += 400;
+		p = 0;
+		q = size_x - 1;
+	}
+	else if (cur_step == 1)
+	{
+		if (j >= size_x)
+		{
+			j = 0;
+			cur_step++;
+			return;
+		}
+		if (j == 0) 
+			grid[2][j] = rand() % (4) + 1;
+		else
+			grid[2][j] = rand() % (4) + grid[2][j - 1];
+		grid3d[2][j]->Text->SetText(FText::FromString(FString::FromInt(grid[2][j])));
+		j++;
+	}
+	else if (cur_step == 2)
+	{
+		if (j >= size_x)
+		{
+			cur_step++;
+			j = size_x - 1;
+			return;
+		}
+		grid[1][j] = rand() % (size_x * size_y) + 1;
+		grid[0][j] = grid[1][j] * grid[2][j];
+		grid3d[0][j]->Text->SetText(FText::FromString(FString::FromInt(grid[0][j])));
+		grid3d[1][j]->Text->SetText(FText::FromString(FString::FromInt(grid[1][j])));
+		j++;
+	}
+	else if (cur_step == 3)
+	{
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
+		if (j < 0)
+		{
+			cur_step = -2;
+			return;
+		}
+		text_color(0, j, 1);
+		text_color(1, j, 1);
+		text_color(2, j, 1);
+		cur_step++;
+	}
+	else if (cur_step == 4)
+	{
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		if (space_left >= grid[1][j])
+		{
+			space_left -= grid[1][j];
+			total_value += grid[0][j];
+			text_color(0, j, 2);
+			text_color(1, j, 2);
+			text_color(2, j, 2);
+			cur_step--;
+			j--;
+		}
+		else
+		{
+			total_value += (1.f * grid[0][j] * space_left / (grid[1][j]));
+			cur_step = -2;
+			text_color(0, j, 3);
+			text_color(1, j, 3);
+			text_color(2, j, 3);
+		}
+	}
 
 }
 

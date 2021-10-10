@@ -11,7 +11,7 @@
 AGraph::AGraph()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	srand(time(0));
 }
 
@@ -30,7 +30,7 @@ void AGraph::BeginPlay()
 	ox = SpawnPosition.X;
 	oy = SpawnPosition.Y;
 	oz = SpawnPosition.Z;
-	grid3d.assign(size_z, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_x, nullptr)));
+	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
 	Store.clear();
 	if (nodes >= size_z * size_y * size_x)
 	{
@@ -76,10 +76,12 @@ void AGraph::Tick(float DeltaTime)
 			SpawnPosition.Z = oz;
 			return;
 		}
+		
 		if (grid3d[i][j][k] == nullptr)
 		{
 			//UE_LOG(LogTemp, Warning, TEXT("Spawning"));
-			if (rand() % min(ProbabilityIn1byX, (nodes - cnodes + 1)) == 0)
+			UE_LOG(LogTemp, Warning, TEXT("%d %d %d"), i, j, k);
+			if (rand() % ProbabilityIn1byX == 0)
 			{
 				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
 				grid3d[i][j][k]->my_i = i;
@@ -94,20 +96,7 @@ void AGraph::Tick(float DeltaTime)
 	}
 	if (cur_step == 1)
 	{
-	   /*
-		FHitResult* HitResult = new FHitResult();
-		FVector StartTrace = GetActorLocation();
-		FVector EndTrace = { 100000, 100000, 100000 };
-		EndTrace = StartTrace + EndTrace;
-		FVector ForwardVector = UKismetMathLibrary::GetDirectionUnitVector(StartTrace, EndTrace);
-		FCollisionQueryParams* TraceParams = new FCollisionQueryParams();
 
-		if (GetWorld()->LineTraceSingleByChannel(*HitResult, StartTrace, EndTrace, ECC_Visibility, *TraceParams))
-		{
-			DrawDebugLine(GetWorld(), StartTrace, EndTrace, FColor(255, 0, 0), true);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("You hit: %s"), *HitResult->Actor->GetName()));
-		}
-	   */
 		if (j >= nodes)
 		{
 			i++;
@@ -128,20 +117,52 @@ void AGraph::Tick(float DeltaTime)
 		Tarloc.Z += 50;
 		FVector dir = Tarloc - Myloc;
 		FRotator pointTo = dir.Rotation();
-		
-		UE_LOG(LogTemp, Warning, TEXT("Between %s and %s, vector is %s, rotator is %s"), *Store[i]->GetName(), *Store[j]->GetName(), *dir.ToString(), *pointTo.ToString());
-		q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
-		FVector scale = { 1,1,dir.Size() };
-		q.edge->SetActorScale3D(scale);
-		q.i = Store[j]->my_i;
-		q.j = Store[j]->my_j;
-		q.k = Store[j]->my_k;
-		Store[j]->edges.push_back(q);
-		q.i = Store[i]->my_i;
-		q.j = Store[i]->my_j;
-		q.k = Store[i]->my_k;
-		Store[i]->edges.push_back(q);
+		Myloc += (52.f * dir / dir.Size());
+		//UE_LOG(LogTemp, Warning, TEXT("Between %s and %s, vector is %s, rotator is %s"), *Store[i]->GetName(), *Store[j]->GetName(), *dir.ToString(), *pointTo.ToString());
+
+		FHitResult* HitResult = new FHitResult();
+		FVector StartTrace = Myloc;
+		FVector EndTrace = Tarloc;
+		FVector ForwardVector = UKismetMathLibrary::GetDirectionUnitVector(StartTrace, EndTrace);
+		FCollisionQueryParams* TraceParams = new FCollisionQueryParams();
+		TraceParams->AddIgnoredActor(Store[i]);
+
+		if (GetWorld()->LineTraceSingleByChannel(*HitResult, StartTrace, EndTrace, ECC_Visibility, *TraceParams))
+		{
+			
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("You hit: %s"), *HitResult->Actor->GetName()));
+			auto who = HitResult->GetActor();
+			bool make = false;
+			if (who->IsA(AGraphNode::StaticClass()))
+			{
+				AGraphNode* hit_node = Cast<AGraphNode>(who);
+				if (hit_node->my_i == Store[j]->my_i && hit_node->my_j == Store[j]->my_j && hit_node->my_k == Store[j]->my_k)
+				{
+					q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
+					FVector scale = { 1,1,dir.Size() - 100.f };
+					q.edge->SetActorScale3D(scale);
+					q.i = Store[j]->my_i;
+					q.j = Store[j]->my_j;
+					q.k = Store[j]->my_k;
+					Store[j]->edges.push_back(q);
+					q.i = Store[i]->my_i;
+					q.j = Store[i]->my_j;
+					q.k = Store[i]->my_k;
+					Store[i]->edges.push_back(q);
+					make = true;
+				}
+			}
+			if (!make)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Edge not made from %s to %s because %s was in the way!"), *Store[i]->GetName(), *Store[j]->GetName(), *who->GetName());
+				DrawDebugLine(GetWorld(), StartTrace, EndTrace, FColor(255, 0, 0), true);
+			}
+		}
+
+
 		j++;
+
+
 	}
 
 
