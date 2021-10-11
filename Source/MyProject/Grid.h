@@ -23,7 +23,7 @@ public:
 	UPROPERTY(EditAnywhere)
 		double delay;
 
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		uint64 space_left = 500;
 protected:
 	// Called when the game starts or when spawned
@@ -33,10 +33,12 @@ protected:
 	UPROPERTY(EditAnywhere)
 		uint64 size_y = 100;
 	UPROPERTY(VisibleAnywhere)
-		double total_value = 0;
+		uint64 total_value = 0;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void Frac_K(bool& retflag);
 
 	void bsearch(bool& retflag);
 
@@ -48,7 +50,9 @@ public:
 	int p = 0;
 	//UPROPERTY(VisibleAnywhere)
 	int q = 0;
-
+	
+	UPROPERTY(EditAnywhere)
+		bool pq = false;
 
 	void BubbleSort(bool& retflag);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

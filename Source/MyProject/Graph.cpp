@@ -2,6 +2,7 @@
 
 #include "GraphNode.h"
 #include "DrawDebugHelpers.h"
+#include "Text3DComponent.h"
 #include <stdlib.h>
 #include "Graph.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -22,7 +23,10 @@ int cnodes = 0;
 void AGraph::BeginPlay()
 {
 	Super::BeginPlay();
-	i = 0; j = 0; k = 0;
+	size_x = 1;
+	size_y = 3 * fib_n;
+	size_z = 2 * fib_n;
+	i = 0; j = size_y / 2; k = size_z - 1;
 	cur_step = 0;
 	cnodes = 0;
 	SpawnParamenters.Owner = this;
@@ -30,20 +34,130 @@ void AGraph::BeginPlay()
 	ox = SpawnPosition.X;
 	oy = SpawnPosition.Y;
 	oz = SpawnPosition.Z;
-	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
 	Store.clear();
 	if (nodes >= size_z * size_y * size_x)
 	{
 		nodes = size_z * size_y * size_x;
 	}
+
+
+	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
 }
 
 // Called every frame
-
+AGraphNode* cur;
 void AGraph::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//bool retflag;
+	//r_graph(retflag);
+	//if (retflag) return;
+
+	if (cur_step == 0)
+	{
+
+		if (grid3d[i][j][k] == nullptr)
+		{
+			grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+			grid3d[i][j][k]->val = fib_n;
+
+			grid3d[i][j][k]->my_i = i;
+			grid3d[i][j][k]->my_j = j;
+			grid3d[i][j][k]->my_k = k;
+
+			grid3d[i][j][k]->SpawnPosition.X = SpawnPosition.X;
+			grid3d[i][j][k]->SpawnPosition.Y = SpawnPosition.Y;
+			grid3d[i][j][k]->SpawnPosition.Z = SpawnPosition.Z;
+
+			grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(grid3d[i][j][k]->val)));
+			first.push_front(grid3d[i][j][k]);
+		}
+		cur_step++;
+		cur = first[0];
+		if (grid3d[i][j][k]->val <= 1)
+		{
+			cur_step = -1;
+		}
+	}
+	else if (cur_step == 1)
+	{
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
+		//auto cur = first[0];
+		//cur->ct--;
+		if (cur->ct == 0)
+			first.pop_front();
+		SpawnPosition = cur->SpawnPosition;
+		j = cur->my_j;
+		k = cur->my_k;
+		SpawnPosition.Z -= DistanceBetweenNodes;
+		SpawnPosition.Y -= DistanceBetweenNodes;
+		if (grid3d[i][j][k]->val - 1 < 0)
+		{
+			cur->ct = 0;
+			cur_step++;
+			return;
+		}
+		grid3d[i][j - 1][k - 1] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		grid3d[i][j - 1][k - 1]->val = grid3d[i][j][k]->val - 1;
+		grid3d[i][j - 1][k - 1]->Text->SetText(FText::FromString(FString::FromInt(grid3d[i][j - 1][k - 1]->val)));
+		grid3d[i][j - 1][k - 1]->SpawnPosition = SpawnPosition;
+		grid3d[i][j - 1][k - 1]->my_i = i;
+		grid3d[i][j - 1][k - 1]->my_j = j - 1;
+		grid3d[i][j - 1][k - 1]->my_k = k - 1;
+		grid3d[i][j - 1][k - 1]->parent = grid3d[i][j][k];
+
+		if (grid3d[i][j][k]->val - 2 < 0)
+		{
+			cur->ct = 1;
+			cur_step++;
+			first.push_front(grid3d[i][j - 1][k - 1]);
+			return;
+		}
+		SpawnPosition.Y += 2 * DistanceBetweenNodes;
+		grid3d[i][j + 1][k - 1] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		grid3d[i][j + 1][k - 1]->val = grid3d[i][j][k]->val - 2;
+		grid3d[i][j + 1][k - 1]->Text->SetText(FText::FromString(FString::FromInt(grid3d[i][j + 1][k - 1]->val)));
+		grid3d[i][j + 1][k - 1]->SpawnPosition = SpawnPosition;
+		grid3d[i][j + 1][k - 1]->my_i = i;
+		grid3d[i][j + 1][k - 1]->my_j = j + 1;
+		grid3d[i][j + 1][k - 1]->my_k = k - 1;
+		grid3d[i][j + 1][k - 1]->parent = grid3d[i][j][k];
+
+
+		first.push_front(grid3d[i][j + 1][k - 1]);
+		first.push_front(grid3d[i][j - 1][k - 1]);
+		cur_step++;
+	}
+	else if (cur_step == 2)
+	{
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
+
+		// remove current cur thing
+		cur = first[0];
+		cur->parent->ct--;
+
+
+
+
+
+
+
+		cur_step--;
+	}
+}
+
+void AGraph::r_graph(bool& retflag)
+{
+	retflag = true;
 
 	if (cur_step == 0)
 	{
@@ -76,7 +190,7 @@ void AGraph::Tick(float DeltaTime)
 			SpawnPosition.Z = oz;
 			return;
 		}
-		
+
 		if (grid3d[i][j][k] == nullptr)
 		{
 			//UE_LOG(LogTemp, Warning, TEXT("Spawning"));
@@ -108,7 +222,7 @@ void AGraph::Tick(float DeltaTime)
 			cur_step = 2;
 			return;
 		}
-		
+
 		AGraphNode::edge_to q;
 		//UE_LOG(LogTemp, Warning, TEXT("%d is store size, cnodes is %d we need %d and %d"), Store.size(), cnodes, i, j);
 		FVector Myloc = Store[i]->GetActorLocation();
@@ -129,7 +243,7 @@ void AGraph::Tick(float DeltaTime)
 
 		if (GetWorld()->LineTraceSingleByChannel(*HitResult, StartTrace, EndTrace, ECC_Visibility, *TraceParams))
 		{
-			
+
 			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("You hit: %s"), *HitResult->Actor->GetName()));
 			auto who = HitResult->GetActor();
 			bool make = false;
@@ -159,13 +273,9 @@ void AGraph::Tick(float DeltaTime)
 			}
 		}
 
-
 		j++;
-
-
 	}
-
-
+	retflag = false;
 }
 
 uint64 AGraph::min(uint64 a, uint64 b)

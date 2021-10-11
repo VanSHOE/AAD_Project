@@ -27,6 +27,7 @@ AGraphNode::AGraphNode()
 void AGraphNode::BeginPlay()
 {
 	Super::BeginPlay();
+	ct = 2;
 	TArray<AActor*> a;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APawn::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());

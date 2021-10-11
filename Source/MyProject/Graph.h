@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include <vector>
+#include <deque>
 #include "GraphNode.h"
 #include "GameFramework/Actor.h"
 #include "Graph.generated.h"
@@ -20,14 +21,18 @@ public:
 	AGraph();
 	uint64 min(uint64 a, uint64 b);
 
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		uint64 size_x;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		uint64 size_y;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		uint64 size_z;
 	UPROPERTY(EditAnywhere)
 		uint64 nodes;
+
+	UPROPERTY(EditAnywhere)
+		uint64 fib_n = 5;
+
 	UPROPERTY(EditAnywhere)
 		uint64 edges;
 	UPROPERTY(EditAnywhere)
@@ -44,6 +49,10 @@ public:
 	std::vector<std::vector<std::vector<AGraphNode*>>> grid3d;
 	std::vector<AGraphNode*> Store;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool next = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool AUTO = false;
 
 protected:
 	// Called when the game starts or when spawned
@@ -51,7 +60,11 @@ protected:
 
 public:	
 	// Called every frame
+	std::deque< AGraphNode*> first;
+	std::deque< AGraphNode*> second;
+
 	virtual void Tick(float DeltaTime) override;
+	void r_graph(bool& retflag);
 	FVector SpawnPosition;
 	FActorSpawnParameters SpawnParamenters;
 };

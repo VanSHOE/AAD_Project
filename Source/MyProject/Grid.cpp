@@ -73,12 +73,23 @@ void AGrid::Tick(float DeltaTime)
 		return;
 	}
 	last = 0;
-	//bool retflag;
-	//BubbleSort(retflag);
-	//Sel(retflag);
-	//SeqSearch(retflag);
+	// bool retflag;
+	// BubbleSort(retflag);
+	// Sel(retflag);
+	// SeqSearch(retflag);
 	// bsearch(retflag);
-	//if (retflag) return;
+	// Frac_K(retflag);
+	// if (retflag) return;
+	if (pq)
+	{
+
+	}
+	
+}
+
+void AGrid::Frac_K(bool& retflag)
+{
+	retflag = true;
 	if (cur_step == -1)
 	{
 		if (next || AUTO)
@@ -126,7 +137,7 @@ void AGrid::Tick(float DeltaTime)
 			cur_step++;
 			return;
 		}
-		if (j == 0) 
+		if (j == 0)
 			grid[2][j] = rand() % (4) + 1;
 		else
 			grid[2][j] = rand() % (4) + grid[2][j - 1];
@@ -189,7 +200,7 @@ void AGrid::Tick(float DeltaTime)
 			text_color(2, j, 3);
 		}
 	}
-
+	retflag = false;
 }
 
 void AGrid::bsearch(bool& retflag)

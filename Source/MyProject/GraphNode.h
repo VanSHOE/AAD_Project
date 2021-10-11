@@ -24,8 +24,11 @@ public:
 		class UStaticMeshComponent* Sphere;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridCell")
 		class UText3DComponent* Text;
-
+	uint64 val;
 	APawn* player = nullptr;
+	AGraphNode* parent = nullptr;
+	AGraphNode* left = nullptr;
+	AGraphNode* right = nullptr;
 	struct edge_to
 	{
 		AGraphEdge* edge;
@@ -36,6 +39,10 @@ public:
 	int my_i;
 	int my_j;
 	int my_k;
+
+	FVector SpawnPosition;
+
+	int ct = 0;
 	std::vector<edge_to> edges;
 protected:
 	// Called when the game starts or when spawned
