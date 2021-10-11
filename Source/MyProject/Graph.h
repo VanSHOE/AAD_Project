@@ -62,7 +62,9 @@ public:
 	// Called every frame
 	std::deque< AGraphNode*> first;
 	std::deque< AGraphNode*> second;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool mem = false;
+	std::vector<bool> me;
 	virtual void Tick(float DeltaTime) override;
 	void r_graph(bool& retflag);
 	FVector SpawnPosition;

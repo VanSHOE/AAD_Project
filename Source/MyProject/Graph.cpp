@@ -20,9 +20,11 @@ AGraph::AGraph()
 int cur_step = 0;
 int ox, oy, oz;
 int cnodes = 0;
+AGraphNode* groot;
 void AGraph::BeginPlay()
 {
 	Super::BeginPlay();
+	groot = nullptr;
 	size_x = 1;
 	size_y = 3 * fib_n;
 	size_z = 2 * fib_n;
@@ -40,6 +42,7 @@ void AGraph::BeginPlay()
 		nodes = size_z * size_y * size_x;
 	}
 
+	me.assign(fib_n + 1, false);
 
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
 }
@@ -56,7 +59,7 @@ void AGraph::Tick(float DeltaTime)
 
 	if (cur_step == 0)
 	{
-
+		/*
 		if (grid3d[i][j][k] == nullptr)
 		{
 			grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
@@ -78,15 +81,29 @@ void AGraph::Tick(float DeltaTime)
 		if (grid3d[i][j][k]->val <= 1)
 		{
 			cur_step = -1;
-		}
+		}*/
+		groot = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		groot->val = fib_n;
+		groot->SpawnPosition = SpawnPosition;
+		groot->Text->SetText(FText::FromString(FString::FromInt(groot->val)));
+		groot->ct = 2;
+		cur = groot;
+		cur_step++;
 	}
 	else if (cur_step == 1)
 	{
+		
 		if (!next && !AUTO)
 		{
 			return;
 		}
+		if (mem && me[cur->val])
+		{
+			cur->ct = 0;
+		}
+		
 		next = false;
+		/*
 		//auto cur = first[0];
 		//cur->ct--;
 		if (cur->ct == 0)
@@ -110,6 +127,8 @@ void AGraph::Tick(float DeltaTime)
 		grid3d[i][j - 1][k - 1]->my_j = j - 1;
 		grid3d[i][j - 1][k - 1]->my_k = k - 1;
 		grid3d[i][j - 1][k - 1]->parent = grid3d[i][j][k];
+		grid3d[i][j][k]->left = grid3d[i][j - 1][k - 1];
+
 
 		if (grid3d[i][j][k]->val - 2 < 0)
 		{
@@ -127,11 +146,100 @@ void AGraph::Tick(float DeltaTime)
 		grid3d[i][j + 1][k - 1]->my_j = j + 1;
 		grid3d[i][j + 1][k - 1]->my_k = k - 1;
 		grid3d[i][j + 1][k - 1]->parent = grid3d[i][j][k];
+		grid3d[i][j][k]->right = grid3d[i][j + 1][k - 1];
 
 
 		first.push_front(grid3d[i][j + 1][k - 1]);
 		first.push_front(grid3d[i][j - 1][k - 1]);
 		cur_step++;
+		*/
+		if (cur->ct == 2)
+		{
+			SpawnPosition = cur->SpawnPosition;
+			SpawnPosition.Z -= DistanceBetweenNodes;
+			SpawnPosition.Y -= cur->val * cur->val * DistanceBetweenNodes;
+			cur->left = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+			cur->left->val = cur->val - 1;
+			cur->left->SpawnPosition = SpawnPosition;
+			cur->left->Text->SetText(FText::FromString(FString::FromInt(cur->left->val)));
+			cur->left->parent = cur;
+			if (cur->left->val <= 1)
+			{
+				cur->left->ct = 0;
+			}
+			else cur->left->ct = 2;
+		
+
+			AGraphNode::edge_to q;
+			FVector Myloc = cur->GetActorLocation();
+			Myloc.Z += 50;
+			FVector Tarloc = cur->left->GetActorLocation();
+			Tarloc.Z += 50;
+			FVector dir = Tarloc - Myloc;
+			FRotator pointTo = dir.Rotation();
+			Myloc += (50.f * dir / dir.Size());
+			q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
+			FVector scale = { 1,1,dir.Size() - 100.f };
+			q.edge->SetActorScale3D(scale);
+			q.i = cur->left->my_i;
+			q.j = cur->left->my_j;
+			q.k = cur->left->my_k;
+			cur->edges.push_back(q);
+			cur = cur->left;
+			//cur_step++;
+			return;
+		}
+		else if (cur->ct == 1)
+		{
+			SpawnPosition = cur->SpawnPosition;
+			SpawnPosition.Z -= DistanceBetweenNodes;
+			SpawnPosition.Y += cur->val * cur->val * DistanceBetweenNodes;
+			cur->right = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+			cur->right->val = cur->val - 2;
+			cur->right->SpawnPosition = SpawnPosition;
+			cur->right->Text->SetText(FText::FromString(FString::FromInt(cur->right->val)));
+			cur->right->parent = cur;
+			if (cur->right->val <= 1)
+			{
+				cur->right->ct = 0;
+			}
+			else cur->right->ct = 2;
+
+
+			AGraphNode::edge_to q;
+			FVector Myloc = cur->GetActorLocation();
+			Myloc.Z += 50;
+			FVector Tarloc = cur->right->GetActorLocation();
+			Tarloc.Z += 50;
+			FVector dir = Tarloc - Myloc;
+			FRotator pointTo = dir.Rotation();
+			Myloc += (50.f * dir / dir.Size());
+			q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
+			FVector scale = { 1,1,dir.Size() - 100.f };
+			q.edge->SetActorScale3D(scale);
+			q.i = cur->right->my_i;
+			q.j = cur->right->my_j;
+			q.k = cur->right->my_k;
+			cur->edges.push_back(q);
+			cur = cur->right;
+
+			//cur_step++;
+			return;
+
+		}
+		else
+		{
+			me[cur->val] = true;
+			if (cur == groot)
+			{
+				cur_step = -2;
+				return;
+			}
+			cur = cur->parent;
+			cur->ct--;
+			return;
+		}
+
 	}
 	else if (cur_step == 2)
 	{
@@ -140,7 +248,7 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-
+		/*
 		// remove current cur thing
 		cur = first[0];
 		cur->parent->ct--;
@@ -152,6 +260,10 @@ void AGraph::Tick(float DeltaTime)
 
 
 		cur_step--;
+		*/
+
+
+
 	}
 }
 
