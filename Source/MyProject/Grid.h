@@ -51,7 +51,7 @@ public:
 	//UPROPERTY(VisibleAnywhere)
 	int q = 0;
 	
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		bool pq = false;
 
 	void BubbleSort(bool& retflag);

@@ -21,13 +21,15 @@ AGraphNode::AGraphNode()
 
 	Text = CreateDefaultSubobject<UText3DComponent>(TEXT("Text"));
 	Text->SetupAttachment(TextScene);
+	visited = false;
 }
 
 // Called when the game starts or when spawned
 void AGraphNode::BeginPlay()
 {
 	Super::BeginPlay();
-	ct = 2;
+	visited = false;
+	ct = 0;
 	TArray<AActor*> a;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APawn::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());

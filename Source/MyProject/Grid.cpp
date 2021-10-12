@@ -11,7 +11,7 @@
 AGrid::AGrid()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	srand(time(0));
 }
 double last = 0;
@@ -41,10 +41,9 @@ void AGrid::BeginPlay()
 	ToSearch = -1;
 	//std::vector<std::vector<uint32>> grid(size_y, std::vector<uint32>(size_x, 0));
 	grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x));
-	grid.assign(size_y, std::vector<int>(size_x));
+	grid.assign(size_y, std::vector<int>(size_x, -1));
 	SpawnParamenters.Owner = this;
 	SpawnPosition = GetActorLocation();
-	SpawnPosition.X = 0;
 	//for (int i = 0; i < size_y; i++)
 	//{
 	//	for (int j = 0; j < size_x; j++)
@@ -80,11 +79,57 @@ void AGrid::Tick(float DeltaTime)
 	// bsearch(retflag);
 	// Frac_K(retflag);
 	// if (retflag) return;
-	if (pq)
+	if (cur_step == -1)
 	{
 
+		cur_step++;
+
 	}
-	
+	else if (cur_step == 0)
+	{
+		if (j >= size_x)
+		{
+			j = 0;
+			I++;
+			SpawnPosition.Y += 400;
+			SpawnPosition.X = GetActorLocation().X;
+		}
+		if (I >= size_y)
+		{
+			cur_step++;
+			grid[0][0] = 0;
+			grid[0][1] = 1;
+			next = true;
+			I = j = 0;
+			return;
+		}
+		grid3d[I][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		if (j == size_x - 1)
+		{
+			grid3d[I][j]->Wall_pX->ToggleVisibility();
+		}
+		if (I == size_y - 1)
+		{
+			grid3d[I][j]->Wall_pY->ToggleVisibility();
+		}
+
+		grid3d[I][j]->Text->SetText(FText::FromString(FString::FromInt(grid[I][j])));
+		j++;
+		SpawnPosition.X += 400;
+		p = 0;
+		q = size_x - 1;
+	}
+	else if (cur_step == 1)
+	{
+		if (next || AUTO)
+		{
+			for (int i = 0; i < size_x; i++)
+			{
+				grid3d[0][i]->Text->SetText(FText::FromString(FString::FromInt(grid[0][i])));
+			}
+			next = false;
+		}
+	}
 }
 
 void AGrid::Frac_K(bool& retflag)

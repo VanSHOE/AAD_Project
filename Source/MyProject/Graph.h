@@ -21,16 +21,16 @@ public:
 	AGraph();
 	uint64 min(uint64 a, uint64 b);
 
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		uint64 size_x;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		uint64 size_y;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		uint64 size_z;
 	UPROPERTY(EditAnywhere)
 		uint64 nodes;
 
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		uint64 fib_n = 5;
 
 	UPROPERTY(EditAnywhere)
@@ -39,6 +39,9 @@ public:
 		int DistanceBetweenNodes;
 	UPROPERTY(EditAnywhere)
 		int ProbabilityIn1byX;
+	
+	UPROPERTY(EditAnywhere)
+		int Ep;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGraphNode> Node;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
@@ -53,7 +56,8 @@ public:
 		bool next = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool AUTO = false;
-
+	UPROPERTY(VisibleAnywhere)
+		int cur_step = 0;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -62,11 +66,14 @@ public:
 	// Called every frame
 	std::deque< AGraphNode*> first;
 	std::deque< AGraphNode*> second;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool mem = false;
 	std::vector<bool> me;
 	virtual void Tick(float DeltaTime) override;
+	void Fib_dp(bool& retflag);
 	void r_graph(bool& retflag);
 	FVector SpawnPosition;
 	FActorSpawnParameters SpawnParamenters;
+
+	class AGrid* mat;
 };

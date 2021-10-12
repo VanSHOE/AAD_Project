@@ -32,6 +32,7 @@ public:
 	struct edge_to
 	{
 		AGraphEdge* edge;
+		AGraphNode* nbor;
 		int i;
 		int j;
 		int k;
@@ -41,8 +42,11 @@ public:
 	int my_k;
 
 	FVector SpawnPosition;
+	bool visited = false;
 
+	UPROPERTY(VisibleAnywhere)
 	int ct = 0;
+	//UPROPERTY(VisibleAnywhere)
 	std::vector<edge_to> edges;
 protected:
 	// Called when the game starts or when spawned
