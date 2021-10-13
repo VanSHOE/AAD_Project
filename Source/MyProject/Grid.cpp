@@ -11,7 +11,7 @@
 AGrid::AGrid()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	srand(time(0));
 }
 double last = 0;
@@ -97,8 +97,6 @@ void AGrid::Tick(float DeltaTime)
 		if (I >= size_y)
 		{
 			cur_step++;
-			grid[0][0] = 0;
-			grid[0][1] = 1;
 			next = true;
 			I = j = 0;
 			return;

@@ -81,4 +81,5 @@ public:
 	FActorSpawnParameters SpawnParamenters;
 	void node_color(AGraphNode* n, bool green);
 	class AGrid* mat;
+
 };

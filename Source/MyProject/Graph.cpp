@@ -13,6 +13,7 @@
 
 // Sets default values
 int c_val = 0;
+int g_index;
 AGraph::AGraph()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -43,6 +44,7 @@ void AGraph::BeginPlay()
 	{
 		nodes = size_z * size_y * size_x;
 	}
+	g_index = nodes - 1;
 	skip = false;
 	c_val = 0;
 	//me.assign(fib_n + 1, false);
@@ -52,6 +54,8 @@ void AGraph::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
 	mat = Cast<AGrid>(a[0]);
+
+
 }
 
 // Called every frame
@@ -99,6 +103,7 @@ void AGraph::Tick(float DeltaTime)
 			if (rand() % ProbabilityIn1byX == 0)
 			{
 				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+				grid3d[i][j][k]->val = c_val;
 				grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(c_val++)));
 				grid3d[i][j][k]->my_i = i;
 				grid3d[i][j][k]->my_j = j;
@@ -125,7 +130,11 @@ void AGraph::Tick(float DeltaTime)
 			cur = Store[0];
 			return;
 		}
-
+		if (i == j)
+		{
+			j++;
+			return;
+		}
 		AGraphNode::edge_to q;
 		//UE_LOG(LogTemp, Warning, TEXT("%d is store size, cnodes is %d we need %d and %d"), Store.size(), cnodes, i, j);
 		FVector Myloc = Store[i]->GetActorLocation();
@@ -224,6 +233,8 @@ void AGraph::Tick(float DeltaTime)
 			skip = true;
 			first.pop_front();
 			node_color(cur, 0);
+			mat->grid[0][g_index--] = cur->val;
+			mat->next = true;
 			if (first.size() == 0)
 			{
 				skip = false;
@@ -504,7 +515,7 @@ void AGraph::node_color(AGraphNode* n, bool green)
 	auto dyn = UMaterialInstanceDynamic::Create(mt, NULL);
 	if (green == 0)
 	{
-		dyn->SetScalarParameterValue(TEXT("Opacity"), 1.f);
+		dyn->SetScalarParameterValue(TEXT("Opacity"), 0.f);
 	}
 	else dyn->SetScalarParameterValue(TEXT("Opacity"), 0.75f);
 	comp->SetMaterial(0, dyn);
