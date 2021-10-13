@@ -121,7 +121,7 @@ void AGraph::Tick(float DeltaTime)
 		if (j >= nodes)
 		{
 			i++;
-			j = 0;
+			j = i + 1;
 		}
 		if (i >= nodes - 1)
 		{
@@ -515,7 +515,8 @@ void AGraph::node_color(AGraphNode* n, bool green)
 	auto dyn = UMaterialInstanceDynamic::Create(mt, NULL);
 	if (green == 0)
 	{
-		dyn->SetScalarParameterValue(TEXT("Opacity"), 0.f);
+		dyn->SetScalarParameterValue(TEXT("Opacity"), 0.75f);
+		dyn->SetScalarParameterValue(TEXT("col"), 1);
 	}
 	else dyn->SetScalarParameterValue(TEXT("Opacity"), 0.75f);
 	comp->SetMaterial(0, dyn);
