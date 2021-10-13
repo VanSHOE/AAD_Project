@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include <vector>
 #include <deque>
+#include "EdgeHead.h"
 #include "GraphNode.h"
 #include "GameFramework/Actor.h"
 #include "Graph.generated.h"
@@ -46,6 +47,8 @@ public:
 		TSubclassOf<AGraphNode> Node;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGraphEdge> Edge;
+	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
+		TSubclassOf<AEdgeHead> Head;
 	uint64 i = 0;
 	uint64 j = 0;
 	uint64 k = 0;
@@ -58,6 +61,8 @@ public:
 		bool AUTO = false;
 	UPROPERTY(VisibleAnywhere)
 		int cur_step = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float headsize = 50.f;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

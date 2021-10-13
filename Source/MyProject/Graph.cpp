@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "GraphNode.h"
+
 #include "DrawDebugHelpers.h"
 #include "Text3DComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -115,7 +116,7 @@ void AGraph::Tick(float DeltaTime)
 		if (j >= nodes)
 		{
 			i++;
-			j = i + 1;
+			j = 0;
 		}
 		if (i >= nodes - 1)
 		{
@@ -133,7 +134,7 @@ void AGraph::Tick(float DeltaTime)
 		Tarloc.Z += 50;
 		FVector dir = Tarloc - Myloc;
 		FRotator pointTo = dir.Rotation();
-		Myloc += (52.f * dir / dir.Size());
+		Myloc += (50.f * dir / dir.Size());
 		//UE_LOG(LogTemp, Warning, TEXT("Between %s and %s, vector is %s, rotator is %s"), *Store[i]->GetName(), *Store[j]->GetName(), *dir.ToString(), *pointTo.ToString());
 
 		FHitResult* HitResult = new FHitResult();
@@ -155,18 +156,21 @@ void AGraph::Tick(float DeltaTime)
 				if (hit_node->my_i == Store[j]->my_i && hit_node->my_j == Store[j]->my_j && hit_node->my_k == Store[j]->my_k)
 				{
 					q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
-					FVector scale = { 1,1,dir.Size() - 100.f };
+					auto hlocl = Tarloc;
+					hlocl -= (50.f + headsize) * ForwardVector;
+					GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParamenters);
+					FVector scale = { 1,1,dir.Size() - (100 + headsize)};
 					q.edge->SetActorScale3D(scale);
 					q.i = Store[j]->my_i;
 					q.j = Store[j]->my_j;
 					q.k = Store[j]->my_k;
 					q.nbor = Store[j];
 					Store[i]->edges.push_back(q);
-					q.i = Store[i]->my_i;
-					q.j = Store[i]->my_j;
-					q.k = Store[i]->my_k;
-					q.nbor = Store[i];
-					Store[j]->edges.push_back(q);
+					//q.i = Store[i]->my_i;
+					//q.j = Store[i]->my_j;
+					//q.k = Store[i]->my_k;
+					//q.nbor = Store[i];
+					//Store[j]->edges.push_back(q);
 					make = true;
 				}
 			}
