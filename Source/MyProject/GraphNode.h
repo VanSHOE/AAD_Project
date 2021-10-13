@@ -48,6 +48,7 @@ public:
 	int ct = 0;
 	//UPROPERTY(VisibleAnywhere)
 	std::vector<edge_to> edges;
+	UMaterialInterface* mt;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

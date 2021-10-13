@@ -33,7 +33,7 @@ public:
 	//UPROPERTY(EditAnywhere)
 		uint64 fib_n = 5;
 
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		uint64 edges;
 	UPROPERTY(EditAnywhere)
 		int DistanceBetweenNodes;
@@ -74,6 +74,6 @@ public:
 	void r_graph(bool& retflag);
 	FVector SpawnPosition;
 	FActorSpawnParameters SpawnParamenters;
-
+	void node_color(AGraphNode* n, bool green);
 	class AGrid* mat;
 };

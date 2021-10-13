@@ -98,6 +98,7 @@ void AGraph::Tick(float DeltaTime)
 			if (rand() % ProbabilityIn1byX == 0)
 			{
 				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+				grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(c_val++)));
 				grid3d[i][j][k]->my_i = i;
 				grid3d[i][j][k]->my_j = j;
 				grid3d[i][j][k]->my_k = k;
@@ -189,7 +190,7 @@ void AGraph::Tick(float DeltaTime)
 		//
 		UE_LOG(LogTemp, Warning, TEXT("At: %s"), *cur->GetName());
 		
-
+		
 		if (!skip)
 			first.push_front(cur);
 		if (cur->visited && !skip)
@@ -197,6 +198,7 @@ void AGraph::Tick(float DeltaTime)
 			skip = true;
 		
 			first.pop_front();
+			//node_color(cur, 0);
 			if (first.size() == 0)
 			{
 				cur_step = -69;
@@ -205,18 +207,19 @@ void AGraph::Tick(float DeltaTime)
 			cur = first[0];
 			return;
 		}
-		
+		node_color(cur, 1);
 		UE_LOG(LogTemp, Warning, TEXT("new G, %d"), first.size());
-		if (!skip)
-			cur->Text->SetText(FText::FromString(FString::FromInt(c_val++)));
+		//if (!skip)
+			
 		skip = false;
 		cur->visited = true;
-		
+
 		if (cur->ct >= cur->edges.size())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("All children over at :%s"), *cur->GetName());
 			skip = true;
 			first.pop_front();
+			node_color(cur, 0);
 			if (first.size() == 0)
 			{
 				skip = false;
@@ -233,6 +236,11 @@ void AGraph::Tick(float DeltaTime)
 	}
 	else if (cur_step == 3)
 	{
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
 		bool found = false;
 		UE_LOG(LogTemp, Warning, TEXT("We are now searching %d"), 6);
 		for (int ii = 0; ii < Store.size(); ii++)
@@ -240,6 +248,7 @@ void AGraph::Tick(float DeltaTime)
 			if (Store[ii]->visited == false)
 			{
 				cur = Store[ii];
+				node_color(cur, 1);
 				cur_step = 2;
 				return;
 			}
@@ -483,3 +492,17 @@ uint64 AGraph::min(uint64 a, uint64 b)
 	if (a < b) return a;
 	return b;
 }
+
+void AGraph::node_color(AGraphNode* n, bool green)
+{
+	UStaticMeshComponent* comp = Cast<UStaticMeshComponent>(n->GetComponentByClass(UStaticMeshComponent::StaticClass()));
+	auto mt = n->mt;
+	auto dyn = UMaterialInstanceDynamic::Create(mt, NULL);
+	if (green == 0)
+	{
+		dyn->SetScalarParameterValue(TEXT("Opacity"), 1.f);
+	}
+	else dyn->SetScalarParameterValue(TEXT("Opacity"), 0.75f);
+	comp->SetMaterial(0, dyn);
+}
+
