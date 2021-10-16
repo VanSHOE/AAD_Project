@@ -27,6 +27,7 @@ int ox, oy, oz;
 int cnodes = 0;
 AGraphNode* groot;
 bool skip = false;
+int cur_bfs = 0;
 void AGraph::BeginPlay()
 {
 	Super::BeginPlay();
@@ -39,6 +40,7 @@ void AGraph::BeginPlay()
 	ox = SpawnPosition.X;
 	oy = SpawnPosition.Y;
 	oz = SpawnPosition.Z;
+	cur_bfs = 0;
 	Store.clear();
 	if (nodes >= size_z * size_y * size_x)
 	{
@@ -54,7 +56,7 @@ void AGraph::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
 	mat = Cast<AGrid>(a[0]);
-
+	second.clear();
 
 }
 
@@ -99,7 +101,7 @@ void AGraph::Tick(float DeltaTime)
 		if (grid3d[i][j][k] == nullptr)
 		{
 			//UE_LOG(LogTemp, Warning, TEXT("Spawning"));
-			UE_LOG(LogTemp, Warning, TEXT("%d %d %d"), i, j, k);
+			//UE_LOG(LogTemp, Warning, TEXT("%d %d %d"), i, j, k);
 			if (rand() % ProbabilityIn1byX == 0)
 			{
 				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
@@ -127,7 +129,7 @@ void AGraph::Tick(float DeltaTime)
 		{
 			i = j = 0;
 			cur_step = 2;
-			cur = Store[0];
+			second.push_back(Store[0]);
 			return;
 		}
 		if (i == j)
@@ -199,76 +201,63 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-		UE_LOG(LogTemp, Warning, TEXT("G, %d"), first.size());
-		//
-		UE_LOG(LogTemp, Warning, TEXT("At: %s"), *cur->GetName());
-		
-		
-		if (!skip)
-			first.push_front(cur);
-		if (cur->visited && !skip)
+
+		if (second.size() == 0)
 		{
-			skip = true;
-		
-			first.pop_front();
-			//node_color(cur, 0);
-			if (first.size() == 0)
-			{
-				cur_step = -69;
-				return;
-			}
-			cur = first[0];
+			cur_step = 4;
 			return;
 		}
-		node_color(cur, 1);
-		UE_LOG(LogTemp, Warning, TEXT("new G, %d"), first.size());
-		//if (!skip)
-			
-		skip = false;
+		cur = second[0];
 		cur->visited = true;
-
-		if (cur->ct >= cur->edges.size())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("All children over at :%s"), *cur->GetName());
-			skip = true;
-			first.pop_front();
-			node_color(cur, 0);
-			//mat->grid[0][g_index--] = cur->val;
-			//mat->next = true;
-			if (first.size() == 0)
-			{
-				skip = false;
-				cur_step = 3;
-				return;
-			}
-			cur = first[0];
-			return;
-		}
-		
-		cur = cur->edges[cur->ct++].nbor;
-		UE_LOG(LogTemp, Warning, TEXT("Going to:%s"), *cur->GetName());
-
+		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *cur->GetName());
+		node_color(cur, 0);
+		second.pop_front();
+		cur_bfs = 0;
+		cur_step = 3;
+		if (cur->edges.size() == 0) skip = true;
 	}
 	else if (cur_step == 3)
+	{
+		if (!next && !AUTO && !skip)
+		{
+			return;
+		}
+		next = false;
+		skip = false;
+		if (cur_bfs >= cur->edges.size())
+		{
+			cur_step--;
+			cur_bfs = 0;
+			return;
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Adding %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
+		if (cur->edges[cur_bfs].nbor->visited == false)
+		{
+			node_color(cur->edges[cur_bfs].nbor, 1);
+			second.push_back(cur->edges[cur_bfs].nbor);
+		}
+		else skip = true;
+		cur_bfs++;
+	}
+	else if (cur_step == 4)
 	{
 		if (!next && !AUTO)
 		{
 			return;
 		}
 		next = false;
-		bool found = false;
-		UE_LOG(LogTemp, Warning, TEXT("We are now searching %d"), 6);
+		UE_LOG(LogTemp, Warning, TEXT("We are now searching"));
 		for (int ii = 0; ii < Store.size(); ii++)
 		{
 			if (Store[ii]->visited == false)
 			{
-				cur = Store[ii];
-				node_color(cur, 1);
+				//cur = Store[ii];
+				second.push_back(Store[ii]);
+				node_color(cur, 0);
 				cur_step = 2;
 				return;
 			}
 		}
-		first.clear();
 		cur_step = 99;
 	
 	}
