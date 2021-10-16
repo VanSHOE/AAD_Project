@@ -233,8 +233,8 @@ void AGraph::Tick(float DeltaTime)
 			skip = true;
 			first.pop_front();
 			node_color(cur, 0);
-			mat->grid[0][g_index--] = cur->val;
-			mat->next = true;
+			//mat->grid[0][g_index--] = cur->val;
+			//mat->next = true;
 			if (first.size() == 0)
 			{
 				skip = false;
