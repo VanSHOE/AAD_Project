@@ -230,10 +230,12 @@ void AGraph::Tick(float DeltaTime)
 			cur_bfs = 0;
 			return;
 		}
-		UE_LOG(LogTemp, Warning, TEXT("Adding %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("On %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
 		if (cur->edges[cur_bfs].nbor->visited == false)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Adding %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
 			node_color(cur->edges[cur_bfs].nbor, 1);
+			cur->edges[cur_bfs].nbor->visited = true;
 			second.push_back(cur->edges[cur_bfs].nbor);
 		}
 		else skip = true;
