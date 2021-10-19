@@ -5,7 +5,6 @@
 #include "DrawDebugHelpers.h"
 #include "Text3DComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Grid.h"
 #include <stdlib.h>
 #include "Graph.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -28,13 +27,16 @@ int cnodes = 0;
 AGraphNode* groot;
 bool skip = false;
 int cur_bfs = 0;
+
 void AGraph::BeginPlay()
 {
 	Super::BeginPlay();
+	fib_n = mn;
 	groot = nullptr;
 	i = j = k = 0;
 	cur_step = 0;
 	cnodes = 0;
+	last = 0;
 	SpawnParamenters.Owner = this;
 	SpawnPosition = GetActorLocation();
 	ox = SpawnPosition.X;
@@ -49,23 +51,30 @@ void AGraph::BeginPlay()
 	g_index = nodes - 1;
 	skip = false;
 	c_val = 0;
-	//me.assign(fib_n + 1, false);
-
+	me.assign(fib_n + 1, false);
+	mem = false;
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
-	TArray<AActor*> a;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
+	//TArray<AActor*> a;
+	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
-	mat = Cast<AGrid>(a[0]);
+	//mat = Cast<AGrid>(a[0]);
 	second.clear();
 
 }
 
 // Called every frame
 AGraphNode* cur;
+
 void AGraph::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	if (last < 0.01f)
+	{
+		last += DeltaTime;
+		return;
+	}
+	last = 0;
+	/*
 	if (cur_step == 0)
 	{
 		if (cnodes >= nodes)
@@ -230,7 +239,7 @@ void AGraph::Tick(float DeltaTime)
 			cur_bfs = 0;
 			return;
 		}
-		UE_LOG(LogTemp, Warning, TEXT("On %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("On  %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
 		if (cur->edges[cur_bfs].nbor->visited == false)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Adding %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
@@ -263,13 +272,7 @@ void AGraph::Tick(float DeltaTime)
 		cur_step = 99;
 	
 	}
-	//UE_LOG(LogTemp, Warning, TEXT("GOT OUT w"));
-	
-}
-
-void AGraph::Fib_dp(bool& retflag)
-{
-	retflag = true;
+	*/
 
 	if (cur_step == 0)
 	{
@@ -297,9 +300,16 @@ void AGraph::Fib_dp(bool& retflag)
 		cur_step = -1;
 		}*/
 		groot = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-		groot->val = fib_n;
+		auto sp = SpawnPosition;
+		sp.Z -= 400.f;
+		sp.Y -= 200.f;
+		sp.X -= 200.f * fib_n;
+		groot->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
+		groot->marray->size_x = groot->val.r = fib_n;
+		groot->marray->next = true;
+		groot->val.l = 0;
 		groot->SpawnPosition = SpawnPosition;
-		groot->Text->SetText(FText::FromString(FString::FromInt(groot->val)));
+		groot->Text->SetText(FText::FromString(c2s(0, fib_n)));
 		groot->ct = 2;
 		cur = groot;
 		cur_step++;
@@ -311,11 +321,6 @@ void AGraph::Fib_dp(bool& retflag)
 		{
 			return;
 		}
-		if (mem && me[cur->val])
-		{
-			cur->ct = 0;
-		}
-
 		next = false;
 		/*
 		//auto cur = first[0];
@@ -370,19 +375,30 @@ void AGraph::Fib_dp(bool& retflag)
 		if (cur->ct == 2)
 		{
 			SpawnPosition = cur->SpawnPosition;
-			SpawnPosition.Z -= DistanceBetweenNodes;
-			SpawnPosition.Y -= cur->val * cur->val * DistanceBetweenNodes;
+			SpawnPosition.Y += DistanceBetweenNodes;
+			SpawnPosition.X -= (cur->val.r - cur->val.l + 1) * DistanceBetweenNodes;
+
 			cur->left = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-			cur->left->val = cur->val - 1;
+			cur->left->val.l = cur->val.l;
+			cur->left->val.r = (cur->val.l + cur->val.r) / 2;
+
+			auto sp = SpawnPosition;
+			sp.Z -= 400.f;
+			sp.Y -= 200.f;
+			sp.X -= 200.f * (cur->left->val.r - cur->left->val.l);
+			cur->left->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
+			cur->left->marray->size_x = cur->left->val.r - cur->left->val.l;
+			cur->left->marray->next = true;
+
 			cur->left->SpawnPosition = SpawnPosition;
-			cur->left->Text->SetText(FText::FromString(FString::FromInt(cur->left->val)));
+			cur->left->Text->SetText(FText::FromString(c2s(cur->left->val.l, cur->left->val.r)));
 			cur->left->parent = cur;
-			if (cur->left->val <= 1)
+			if (cur->left->val.l + 2 >= cur->left->val.r)
 			{
 				cur->left->ct = 0;
 			}
-			else cur->left->ct = 2;
-
+			else 
+				cur->left->ct = 2;
 
 			AGraphNode::edge_to q;
 			FVector Myloc = cur->GetActorLocation();
@@ -406,19 +422,29 @@ void AGraph::Fib_dp(bool& retflag)
 		else if (cur->ct == 1)
 		{
 			SpawnPosition = cur->SpawnPosition;
-			SpawnPosition.Z -= DistanceBetweenNodes;
-			SpawnPosition.Y += cur->val * cur->val * DistanceBetweenNodes;
+			SpawnPosition.Y += DistanceBetweenNodes;
+			SpawnPosition.X += (cur->val.r - cur->val.l) * DistanceBetweenNodes;
 			cur->right = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-			cur->right->val = cur->val - 2;
+			cur->right->val.l = (cur->val.l + cur->val.r) / 2;
+			cur->right->val.r = cur->val.r;
+
+			auto sp = SpawnPosition;
+			sp.Z -= 400.f;
+			sp.Y -= 200.f;
+			sp.X -= 200.f * (cur->right->val.r - cur->right->val.l);
+			cur->right->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
+			cur->right->marray->size_x = cur->right->val.r - cur->right->val.l;
+			cur->right->marray->next = true;
+
 			cur->right->SpawnPosition = SpawnPosition;
-			cur->right->Text->SetText(FText::FromString(FString::FromInt(cur->right->val)));
+			cur->right->Text->SetText(FText::FromString(c2s(cur->right->val.l, cur->right->val.r)));
 			cur->right->parent = cur;
-			if (cur->right->val <= 1)
+
+			if (cur->right->val.l + 2 >= cur->right->val.r)
 			{
 				cur->right->ct = 0;
 			}
 			else cur->right->ct = 2;
-
 
 			AGraphNode::edge_to q;
 			FVector Myloc = cur->GetActorLocation();
@@ -443,10 +469,13 @@ void AGraph::Fib_dp(bool& retflag)
 		}
 		else
 		{
+			/*
 			me[cur->val] = true;
 			if (cur->val > 1)
 				mat->grid[0][cur->val] = mat->grid[0][cur->val - 1] + mat->grid[0][cur->val - 2];
 			mat->next = true;
+			*/
+			
 			if (cur == groot)
 			{
 				cur_step = -2;
@@ -465,25 +494,22 @@ void AGraph::Fib_dp(bool& retflag)
 			return;
 		}
 		next = false;
-		/*
-		// remove current cur thing
-		cur = first[0];
-		cur->parent->ct--;
-
-
-
-
-
-
-
-		cur_step--;
-		*/
-
-
-
 	}
-	retflag = false;
+
+
+
+
+
+
+	
+	
+	
+	
+
+	
+	
 }
+
 
 void AGraph::r_graph(bool& retflag)
 {
@@ -513,3 +539,7 @@ void AGraph::node_color(AGraphNode* n, bool green)
 	comp->SetMaterial(0, dyn);
 }
 
+FString AGraph::c2s(int l, int r)
+{
+	return "[" + FString::FromInt(l) + ", " + FString::FromInt(r) + ")";
+}

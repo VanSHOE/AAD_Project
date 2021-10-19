@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Text3DComponent.h"
+#include "Grid.h"
 // Sets default values
 AGraphNode::AGraphNode()
 {

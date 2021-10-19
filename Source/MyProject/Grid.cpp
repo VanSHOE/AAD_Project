@@ -11,20 +11,14 @@
 AGrid::AGrid()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	srand(time(0));
 }
-double last = 0;
-
-int I = 0;
-int j = 0;
-int cur = 1;
-int mid = -1;
-FVector SpawnPosition;
-FActorSpawnParameters SpawnParamenters;
 
 // Called when the game starts or when spawned
-int mini = 0;
+
+
+
 void AGrid::BeginPlay()
 {
 	Super::BeginPlay();
@@ -40,8 +34,7 @@ void AGrid::BeginPlay()
 	mini = 0;
 	ToSearch = -1;
 	//std::vector<std::vector<uint32>> grid(size_y, std::vector<uint32>(size_x, 0));
-	grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x));
-	grid.assign(size_y, std::vector<int>(size_x, -1));
+
 	SpawnParamenters.Owner = this;
 	SpawnPosition = GetActorLocation();
 	//for (int i = 0; i < size_y; i++)
@@ -81,9 +74,13 @@ void AGrid::Tick(float DeltaTime)
 	// if (retflag) return;
 	if (cur_step == -1)
 	{
-
-		cur_step++;
-
+		if (next)
+		{
+			grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x));
+			grid.assign(size_y, std::vector<int>(size_x, -1));
+			cur_step++;
+			next = false;
+		}
 	}
 	else if (cur_step == 0)
 	{

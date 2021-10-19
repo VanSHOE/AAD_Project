@@ -10,9 +10,9 @@
 
 UCLASS()
 class MYPROJECT_API AGraphNode : public AActor
-{   
+{
 	GENERATED_BODY()
-    
+
 public:
 	// Sets default values for this actor's properties
 	AGraphNode();
@@ -24,7 +24,14 @@ public:
 		class UStaticMeshComponent* Sphere;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GridCell")
 		class UText3DComponent* Text;
-	uint64 val;
+
+	struct msort
+	{
+		uint64 l;
+		uint64 r;
+	} val;
+
+
 	APawn* player = nullptr;
 	AGraphNode* parent = nullptr;
 	AGraphNode* left = nullptr;
@@ -49,6 +56,8 @@ public:
 	//UPROPERTY(VisibleAnywhere)
 	std::vector<edge_to> edges;
 	UMaterialInterface* mt;
+	class AGrid* marray;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

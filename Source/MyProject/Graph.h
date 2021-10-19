@@ -7,6 +7,7 @@
 #include <deque>
 #include "EdgeHead.h"
 #include "GraphNode.h"
+#include "Grid.h"
 #include "GameFramework/Actor.h"
 #include "Graph.generated.h"
 
@@ -22,27 +23,31 @@ public:
 	AGraph();
 	uint64 min(uint64 a, uint64 b);
 
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		uint64 size_x;
-	UPROPERTY(EditAnywhere)
+//	UPROPERTY(EditAnywhere)
 		uint64 size_y;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		uint64 size_z;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		uint64 nodes;
 
-	//UPROPERTY(EditAnywhere)
-		uint64 fib_n = 5;
+	UPROPERTY(EditAnywhere)
+		uint64 mn = 5;
+	uint64 fib_n = 5;
 
 	//UPROPERTY(EditAnywhere)
 		uint64 edges;
 	UPROPERTY(EditAnywhere)
 		int DistanceBetweenNodes;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int ProbabilityIn1byX;
-	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
+		double last = 0;
+	//UPROPERTY(EditAnywhere)
 		int Ep;
+	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
+		TSubclassOf<AGrid> GBP;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGraphNode> Node;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
@@ -61,7 +66,7 @@ public:
 		bool AUTO = false;
 	UPROPERTY(VisibleAnywhere)
 		int cur_step = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float headsize = 50.f;
 protected:
 	// Called when the game starts or when spawned
@@ -82,4 +87,5 @@ public:
 	void node_color(AGraphNode* n, bool green);
 	class AGrid* mat;
 
+	FString c2s(int l, int r);
 };

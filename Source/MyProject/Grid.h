@@ -15,6 +15,18 @@ class MYPROJECT_API AGrid : public AActor
 	
 public:	
 	// Sets default values for this actor's properties
+
+	double last = 0;
+	int I = 0;
+	int j = 0;
+	int cur = 1;
+	int mid = -1;
+	int mini = 0;
+
+	FVector SpawnPosition;
+	FActorSpawnParameters SpawnParamenters;
+
+
 	AGrid();
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGrid_Cell> CellBP;
@@ -25,15 +37,16 @@ public:
 
 	//UPROPERTY(EditAnywhere)
 		uint64 space_left = 500;
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 	UPROPERTY(EditAnywhere)
 		uint64 size_x = 100;
 	UPROPERTY(EditAnywhere)
 		uint64 size_y = 100;
 	UPROPERTY(VisibleAnywhere)
 		uint64 total_value = 0;
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
