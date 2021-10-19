@@ -42,8 +42,6 @@ public:
 		int DistanceBetweenNodes;
 	//UPROPERTY(EditAnywhere)
 		int ProbabilityIn1byX;
-	UPROPERTY(VisibleAnywhere)
-		double last = 0;
 	//UPROPERTY(EditAnywhere)
 		int Ep;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
@@ -86,6 +84,30 @@ public:
 	FActorSpawnParameters SpawnParamenters;
 	void node_color(AGraphNode* n, bool green);
 	class AGrid* mat;
-
+	UPROPERTY(EditAnywhere)
+		double delay = 0.01f;
 	FString c2s(int l, int r);
+private:
+	int c_val = 0;
+	int g_index;
+	int ox, oy, oz;
+	int cnodes = 0;
+	double last = 0;
+	struct msrtflags
+	{
+		int i = 0;
+		int j = 0;
+		int k = 0;
+		bool l = true;
+		bool r = true;
+		void reset()
+		{
+			i = j = k = 0;
+			l = r = true;
+		}
+	} msi;
+	AGraphNode* groot;
+	bool skip = false;
+	int cur_bfs = 0;
+	AGraphNode* cur;
 };

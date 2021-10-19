@@ -57,14 +57,14 @@ void AGrid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	//UE_LOG(LogTemp, Warning, TEXT("%d %d"), p, q);
-
-
+	/*
 	last += DeltaTime;
 	if (last < delay)
 	{
 		return;
 	}
 	last = 0;
+	*/
 	// bool retflag;
 	// BubbleSort(retflag);
 	// Sel(retflag);
@@ -74,13 +74,7 @@ void AGrid::Tick(float DeltaTime)
 	// if (retflag) return;
 	if (cur_step == -1)
 	{
-		if (next)
-		{
-			grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x));
-			grid.assign(size_y, std::vector<int>(size_x, -1));
-			cur_step++;
-			next = false;
-		}
+		cur_step++;
 	}
 	else if (cur_step == 0)
 	{
@@ -628,6 +622,8 @@ void AGrid::BubbleSort(bool& retflag)
 	retflag = false;
 }
 
+
+// 0: White, 1: Purple, 2: Green, 3: Blue
 void AGrid::text_color(int c, int r, int col)
 {
 	auto mat = grid3d[c][r]->Text->FrontMaterial->GetMaterial();

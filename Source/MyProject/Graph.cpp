@@ -11,8 +11,7 @@
 
 
 // Sets default values
-int c_val = 0;
-int g_index;
+
 AGraph::AGraph()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -22,11 +21,7 @@ AGraph::AGraph()
 
 // Called when the game starts or when spawned
 
-int ox, oy, oz;
-int cnodes = 0;
-AGraphNode* groot;
-bool skip = false;
-int cur_bfs = 0;
+
 
 void AGraph::BeginPlay()
 {
@@ -63,12 +58,12 @@ void AGraph::BeginPlay()
 }
 
 // Called every frame
-AGraphNode* cur;
+
 
 void AGraph::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (last < 0.01f)
+	if (last < delay)
 	{
 		last += DeltaTime;
 		return;
@@ -306,7 +301,15 @@ void AGraph::Tick(float DeltaTime)
 		sp.X -= 200.f * fib_n;
 		groot->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
 		groot->marray->size_x = groot->val.r = fib_n;
+
+		groot->marray->grid3d.assign(1, std::vector<AGrid_Cell*>(fib_n));
+		groot->marray->grid.assign(1, std::vector<int>(fib_n, -1));
+		for (int ii = 0; ii < fib_n; ii++)
+		{
+			groot->marray->grid[0][ii] = rand() % (2 * fib_n) - fib_n + 1;
+		}
 		groot->marray->next = true;
+
 		groot->val.l = 0;
 		groot->SpawnPosition = SpawnPosition;
 		groot->Text->SetText(FText::FromString(c2s(0, fib_n)));
@@ -388,6 +391,12 @@ void AGraph::Tick(float DeltaTime)
 			sp.X -= 200.f * (cur->left->val.r - cur->left->val.l);
 			cur->left->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
 			cur->left->marray->size_x = cur->left->val.r - cur->left->val.l;
+			cur->left->marray->grid3d.assign(1, std::vector<AGrid_Cell*>(cur->left->marray->size_x));
+			cur->left->marray->grid.assign(1, std::vector<int>(cur->left->marray->size_x, -1));
+			for (int ii = 0; ii < cur->left->marray->size_x; ii++)
+			{
+				cur->left->marray->grid[0][ii] = cur->marray->grid[0][ii];
+			}
 			cur->left->marray->next = true;
 
 			cur->left->SpawnPosition = SpawnPosition;
@@ -434,6 +443,12 @@ void AGraph::Tick(float DeltaTime)
 			sp.X -= 200.f * (cur->right->val.r - cur->right->val.l);
 			cur->right->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
 			cur->right->marray->size_x = cur->right->val.r - cur->right->val.l;
+			cur->right->marray->grid3d.assign(1, std::vector<AGrid_Cell*>(cur->right->marray->size_x));
+			cur->right->marray->grid.assign(1, std::vector<int>(cur->right->marray->size_x, -1));
+			for (int ii = cur->right->marray->size_x - 1; ii >= 0; ii--)
+			{
+				cur->right->marray->grid[0][ii] = cur->marray->grid[0][cur->marray->size_x - 1 - (cur->right->marray->size_x - 1 - ii)];
+			}
 			cur->right->marray->next = true;
 
 			cur->right->SpawnPosition = SpawnPosition;
@@ -465,20 +480,26 @@ void AGraph::Tick(float DeltaTime)
 
 			//cur_step++;
 			return;
-
 		}
 		else
 		{
-			/*
-			me[cur->val] = true;
-			if (cur->val > 1)
-				mat->grid[0][cur->val] = mat->grid[0][cur->val - 1] + mat->grid[0][cur->val - 2];
-			mat->next = true;
-			*/
-			
-			if (cur == groot)
+			if (cur->val.r - cur->val.l == 2)
 			{
-				cur_step = -2;
+				if (cur->marray->grid[0][0] > cur->marray->grid[0][1])
+				{
+					int temp = cur->marray->grid[0][0];
+					cur->marray->grid[0][0] = cur->marray->grid[0][1];
+					cur->marray->grid[0][1] = temp;
+					cur->marray->next = true;
+				}
+			}
+			else if (cur->val.r - cur->val.l > 2)
+			{
+				cur_step = 2;
+				cur->marray->text_color(0, 0, 3);
+				cur->left->marray->text_color(0, 0, 3);
+				cur->right->marray->text_color(0, 0, 3);
+				msi.reset();
 				return;
 			}
 			cur = cur->parent;
@@ -494,6 +515,83 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
+		if (msi.i >= cur->left->marray->size_x)
+		{
+			msi.l = false;
+		}
+		if (msi.j >= cur->right->marray->size_x)
+		{
+			msi.r = false;
+		}
+		if (msi.l && msi.r)
+		{
+			if (cur->left->marray->grid[0][msi.i] < cur->right->marray->grid[0][msi.j])
+			{
+				cur->marray->text_color(0, msi.k, 2);
+				cur->left->marray->text_color(0, msi.i, 2);
+
+				cur->marray->grid[0][msi.k++] = cur->left->marray->grid[0][msi.i++];
+
+				if(msi.k < cur->marray->size_x)
+					cur->marray->text_color(0, msi.k, 3);
+				if(msi.i < cur->left->marray->size_x)
+					cur->left->marray->text_color(0, msi.i, 3);
+			}
+			else
+			{
+				cur->marray->text_color(0, msi.k, 2);
+				cur->right->marray->text_color(0, msi.j, 2);
+
+				cur->marray->grid[0][msi.k++] = cur->right->marray->grid[0][msi.j++];
+
+				if (msi.k < cur->marray->size_x)
+					cur->marray->text_color(0, msi.k, 3);
+				if (msi.j < cur->right->marray->size_x)
+					cur->right->marray->text_color(0, msi.j, 3);
+			}
+			cur->marray->next = true;
+		}
+		else if (msi.l)
+		{
+			cur->marray->text_color(0, msi.k, 2);
+			cur->left->marray->text_color(0, msi.i, 2);
+
+			cur->marray->grid[0][msi.k++] = cur->left->marray->grid[0][msi.i++];
+
+			if (msi.k < cur->marray->size_x)
+				cur->marray->text_color(0, msi.k, 3);
+			if (msi.i < cur->left->marray->size_x)
+				cur->left->marray->text_color(0, msi.i, 3);
+
+			cur->marray->next = true;
+		}
+		else if (msi.r)
+		{
+			cur->marray->text_color(0, msi.k, 2);
+			cur->right->marray->text_color(0, msi.j, 2);
+
+			cur->marray->grid[0][msi.k++] = cur->right->marray->grid[0][msi.j++];
+
+			if (msi.k < cur->marray->size_x)
+				cur->marray->text_color(0, msi.k, 3);
+			if (msi.j < cur->right->marray->size_x)
+				cur->right->marray->text_color(0, msi.j, 3);
+			cur->marray->next = true;
+		}
+		else
+		{
+			msi.reset();
+			if (cur == groot)
+			{
+				cur_step = -2;
+				return;
+			}
+			cur = cur->parent;
+			cur->ct--;
+			cur_step = 1;
+			return;
+		}
+
 	}
 
 

@@ -12,16 +12,17 @@ UCLASS()
 class MYPROJECT_API AGrid : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-
+private:
 	double last = 0;
 	int I = 0;
 	int j = 0;
 	int cur = 1;
 	int mid = -1;
 	int mini = 0;
+
+public:	
+	// Sets default values for this actor's properties
+
 
 	FVector SpawnPosition;
 	FActorSpawnParameters SpawnParamenters;
