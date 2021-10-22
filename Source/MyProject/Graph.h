@@ -7,6 +7,7 @@
 #include <deque>
 #include "EdgeHead.h"
 #include "GraphNode.h"
+#include "EWeight.h"
 #include "Grid.h"
 #include "GameFramework/Actor.h"
 #include "Graph.generated.h"
@@ -23,27 +24,28 @@ public:
 	AGraph();
 	uint64 min(uint64 a, uint64 b);
 
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		uint64 size_x;
-//	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		uint64 size_y;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		uint64 size_z;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		uint64 nodes;
 
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		uint64 mn = 5;
 	uint64 fib_n = 5;
 
 	//UPROPERTY(EditAnywhere)
 		uint64 edges;
 	UPROPERTY(EditAnywhere)
-		int DistanceBetweenNodes;
-	//UPROPERTY(EditAnywhere)
-		int ProbabilityIn1byX;
-	//UPROPERTY(EditAnywhere)
-		int Ep;
+		int DistanceBetweenNodes = 400;
+	UPROPERTY(EditAnywhere)
+		int ProbabilityIn1byX = 5;
+	UPROPERTY(EditAnywhere)
+		int Ep = 5;
+
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGrid> GBP;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
@@ -52,6 +54,8 @@ public:
 		TSubclassOf<AGraphEdge> Edge;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AEdgeHead> Head;
+	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
+		TSubclassOf<AEWeight> WtText;
 	uint64 i = 0;
 	uint64 j = 0;
 	uint64 k = 0;
@@ -64,8 +68,8 @@ public:
 		bool AUTO = false;
 	UPROPERTY(VisibleAnywhere)
 		int cur_step = 0;
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float headsize = 50.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float headsize = 25.f;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

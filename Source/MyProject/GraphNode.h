@@ -29,8 +29,9 @@ public:
 	{
 		uint64 l;
 		uint64 r;
-	} val;
+	} qval;
 
+	int val;
 
 	APawn* player = nullptr;
 	AGraphNode* parent = nullptr;

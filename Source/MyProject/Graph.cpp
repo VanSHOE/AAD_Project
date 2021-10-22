@@ -69,7 +69,7 @@ void AGraph::Tick(float DeltaTime)
 		return;
 	}
 	last = 0;
-	/*
+	
 	if (cur_step == 0)
 	{
 		if (cnodes >= nodes)
@@ -174,8 +174,20 @@ void AGraph::Tick(float DeltaTime)
 					auto hlocl = Tarloc;
 					hlocl -= (50.f + headsize) * ForwardVector;
 					GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParamenters);
-					FVector scale = { 1,1,dir.Size() - (100 + headsize)};
+					FVector scale = { 1, 1, dir.Size() - (100 + headsize) };
 					q.edge->SetActorScale3D(scale);
+					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
+					GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
+
+
+
+
+
+
+
+
+
+
 					q.i = Store[j]->my_i;
 					q.j = Store[j]->my_j;
 					q.k = Store[j]->my_k;
@@ -267,333 +279,7 @@ void AGraph::Tick(float DeltaTime)
 		cur_step = 99;
 	
 	}
-	*/
-
-	if (cur_step == 0)
-	{
-		/*
-		if (grid3d[i][j][k] == nullptr)
-		{
-		grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-		grid3d[i][j][k]->val = fib_n;
-
-		grid3d[i][j][k]->my_i = i;
-		grid3d[i][j][k]->my_j = j;
-		grid3d[i][j][k]->my_k = k;
-
-		grid3d[i][j][k]->SpawnPosition.X = SpawnPosition.X;
-		grid3d[i][j][k]->SpawnPosition.Y = SpawnPosition.Y;
-		grid3d[i][j][k]->SpawnPosition.Z = SpawnPosition.Z;
-
-		grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(grid3d[i][j][k]->val)));
-		first.push_front(grid3d[i][j][k]);
-		}
-		cur_step++;
-		cur = first[0];
-		if (grid3d[i][j][k]->val <= 1)
-		{
-		cur_step = -1;
-		}*/
-		groot = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-		auto sp = SpawnPosition;
-		sp.Z -= 400.f;
-		sp.Y -= 200.f;
-		sp.X -= 200.f * fib_n;
-		groot->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
-		groot->marray->size_x = groot->val.r = fib_n;
-
-		groot->marray->grid3d.assign(1, std::vector<AGrid_Cell*>(fib_n));
-		groot->marray->grid.assign(1, std::vector<int>(fib_n, -1));
-		for (int ii = 0; ii < fib_n; ii++)
-		{
-			groot->marray->grid[0][ii] = rand() % (2 * fib_n) - fib_n + 1;
-		}
-		groot->marray->next = true;
-
-		groot->val.l = 0;
-		groot->SpawnPosition = SpawnPosition;
-		groot->Text->SetText(FText::FromString(c2s(0, fib_n)));
-		groot->ct = 2;
-		cur = groot;
-		cur_step++;
-	}
-	else if (cur_step == 1)
-	{
-
-		if (!next && !AUTO)
-		{
-			return;
-		}
-		next = false;
-		/*
-		//auto cur = first[0];
-		//cur->ct--;
-		if (cur->ct == 0)
-		first.pop_front();
-		SpawnPosition = cur->SpawnPosition;
-		j = cur->my_j;
-		k = cur->my_k;
-		SpawnPosition.Z -= DistanceBetweenNodes;
-		SpawnPosition.Y -= DistanceBetweenNodes;
-		if (grid3d[i][j][k]->val - 1 < 0)
-		{
-		cur->ct = 0;
-		cur_step++;
-		return;
-		}
-		grid3d[i][j - 1][k - 1] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-		grid3d[i][j - 1][k - 1]->val = grid3d[i][j][k]->val - 1;
-		grid3d[i][j - 1][k - 1]->Text->SetText(FText::FromString(FString::FromInt(grid3d[i][j - 1][k - 1]->val)));
-		grid3d[i][j - 1][k - 1]->SpawnPosition = SpawnPosition;
-		grid3d[i][j - 1][k - 1]->my_i = i;
-		grid3d[i][j - 1][k - 1]->my_j = j - 1;
-		grid3d[i][j - 1][k - 1]->my_k = k - 1;
-		grid3d[i][j - 1][k - 1]->parent = grid3d[i][j][k];
-		grid3d[i][j][k]->left = grid3d[i][j - 1][k - 1];
-
-
-		if (grid3d[i][j][k]->val - 2 < 0)
-		{
-		cur->ct = 1;
-		cur_step++;
-		first.push_front(grid3d[i][j - 1][k - 1]);
-		return;
-		}
-		SpawnPosition.Y += 2 * DistanceBetweenNodes;
-		grid3d[i][j + 1][k - 1] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-		grid3d[i][j + 1][k - 1]->val = grid3d[i][j][k]->val - 2;
-		grid3d[i][j + 1][k - 1]->Text->SetText(FText::FromString(FString::FromInt(grid3d[i][j + 1][k - 1]->val)));
-		grid3d[i][j + 1][k - 1]->SpawnPosition = SpawnPosition;
-		grid3d[i][j + 1][k - 1]->my_i = i;
-		grid3d[i][j + 1][k - 1]->my_j = j + 1;
-		grid3d[i][j + 1][k - 1]->my_k = k - 1;
-		grid3d[i][j + 1][k - 1]->parent = grid3d[i][j][k];
-		grid3d[i][j][k]->right = grid3d[i][j + 1][k - 1];
-
-
-		first.push_front(grid3d[i][j + 1][k - 1]);
-		first.push_front(grid3d[i][j - 1][k - 1]);
-		cur_step++;
-		*/
-		if (cur->ct == 2)
-		{
-			SpawnPosition = cur->SpawnPosition;
-			SpawnPosition.Y += DistanceBetweenNodes;
-			SpawnPosition.X -= (cur->val.r - cur->val.l + 1) * DistanceBetweenNodes;
-
-			cur->left = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-			cur->left->val.l = cur->val.l;
-			cur->left->val.r = (cur->val.l + cur->val.r) / 2;
-
-			auto sp = SpawnPosition;
-			sp.Z -= 400.f;
-			sp.Y -= 200.f;
-			sp.X -= 200.f * (cur->left->val.r - cur->left->val.l);
-			cur->left->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
-			cur->left->marray->size_x = cur->left->val.r - cur->left->val.l;
-			cur->left->marray->grid3d.assign(1, std::vector<AGrid_Cell*>(cur->left->marray->size_x));
-			cur->left->marray->grid.assign(1, std::vector<int>(cur->left->marray->size_x, -1));
-			for (int ii = 0; ii < cur->left->marray->size_x; ii++)
-			{
-				cur->left->marray->grid[0][ii] = cur->marray->grid[0][ii];
-			}
-			cur->left->marray->next = true;
-
-			cur->left->SpawnPosition = SpawnPosition;
-			cur->left->Text->SetText(FText::FromString(c2s(cur->left->val.l, cur->left->val.r)));
-			cur->left->parent = cur;
-			if (cur->left->val.l + 2 >= cur->left->val.r)
-			{
-				cur->left->ct = 0;
-			}
-			else 
-				cur->left->ct = 2;
-
-			AGraphNode::edge_to q;
-			FVector Myloc = cur->GetActorLocation();
-			Myloc.Z += 50;
-			FVector Tarloc = cur->left->GetActorLocation();
-			Tarloc.Z += 50;
-			FVector dir = Tarloc - Myloc;
-			FRotator pointTo = dir.Rotation();
-			Myloc += (50.f * dir / dir.Size());
-			q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
-			FVector scale = { 1,1,dir.Size() - 100.f };
-			q.edge->SetActorScale3D(scale);
-			q.i = cur->left->my_i;
-			q.j = cur->left->my_j;
-			q.k = cur->left->my_k;
-			cur->edges.push_back(q);
-			cur = cur->left;
-			//cur_step++;
-			return;
-		}
-		else if (cur->ct == 1)
-		{
-			SpawnPosition = cur->SpawnPosition;
-			SpawnPosition.Y += DistanceBetweenNodes;
-			SpawnPosition.X += (cur->val.r - cur->val.l) * DistanceBetweenNodes;
-			cur->right = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-			cur->right->val.l = (cur->val.l + cur->val.r) / 2;
-			cur->right->val.r = cur->val.r;
-
-			auto sp = SpawnPosition;
-			sp.Z -= 400.f;
-			sp.Y -= 200.f;
-			sp.X -= 200.f * (cur->right->val.r - cur->right->val.l);
-			cur->right->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
-			cur->right->marray->size_x = cur->right->val.r - cur->right->val.l;
-			cur->right->marray->grid3d.assign(1, std::vector<AGrid_Cell*>(cur->right->marray->size_x));
-			cur->right->marray->grid.assign(1, std::vector<int>(cur->right->marray->size_x, -1));
-			for (int ii = cur->right->marray->size_x - 1; ii >= 0; ii--)
-			{
-				cur->right->marray->grid[0][ii] = cur->marray->grid[0][cur->marray->size_x - 1 - (cur->right->marray->size_x - 1 - ii)];
-			}
-			cur->right->marray->next = true;
-
-			cur->right->SpawnPosition = SpawnPosition;
-			cur->right->Text->SetText(FText::FromString(c2s(cur->right->val.l, cur->right->val.r)));
-			cur->right->parent = cur;
-
-			if (cur->right->val.l + 2 >= cur->right->val.r)
-			{
-				cur->right->ct = 0;
-			}
-			else cur->right->ct = 2;
-
-			AGraphNode::edge_to q;
-			FVector Myloc = cur->GetActorLocation();
-			Myloc.Z += 50;
-			FVector Tarloc = cur->right->GetActorLocation();
-			Tarloc.Z += 50;
-			FVector dir = Tarloc - Myloc;
-			FRotator pointTo = dir.Rotation();
-			Myloc += (50.f * dir / dir.Size());
-			q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
-			FVector scale = { 1,1,dir.Size() - 100.f };
-			q.edge->SetActorScale3D(scale);
-			q.i = cur->right->my_i;
-			q.j = cur->right->my_j;
-			q.k = cur->right->my_k;
-			cur->edges.push_back(q);
-			cur = cur->right;
-
-			//cur_step++;
-			return;
-		}
-		else
-		{
-			if (cur->val.r - cur->val.l == 2)
-			{
-				if (cur->marray->grid[0][0] > cur->marray->grid[0][1])
-				{
-					int temp = cur->marray->grid[0][0];
-					cur->marray->grid[0][0] = cur->marray->grid[0][1];
-					cur->marray->grid[0][1] = temp;
-					cur->marray->next = true;
-				}
-			}
-			else if (cur->val.r - cur->val.l > 2)
-			{
-				cur_step = 2;
-				cur->marray->text_color(0, 0, 3);
-				cur->left->marray->text_color(0, 0, 3);
-				cur->right->marray->text_color(0, 0, 3);
-				msi.reset();
-				return;
-			}
-			cur = cur->parent;
-			cur->ct--;
-			return;
-		}
-
-	}
-	else if (cur_step == 2)
-	{
-		if (!next && !AUTO)
-		{
-			return;
-		}
-		next = false;
-		if (msi.i >= cur->left->marray->size_x)
-		{
-			msi.l = false;
-		}
-		if (msi.j >= cur->right->marray->size_x)
-		{
-			msi.r = false;
-		}
-		if (msi.l && msi.r)
-		{
-			if (cur->left->marray->grid[0][msi.i] < cur->right->marray->grid[0][msi.j])
-			{
-				cur->marray->text_color(0, msi.k, 2);
-				cur->left->marray->text_color(0, msi.i, 2);
-
-				cur->marray->grid[0][msi.k++] = cur->left->marray->grid[0][msi.i++];
-
-				if(msi.k < cur->marray->size_x)
-					cur->marray->text_color(0, msi.k, 3);
-				if(msi.i < cur->left->marray->size_x)
-					cur->left->marray->text_color(0, msi.i, 3);
-			}
-			else
-			{
-				cur->marray->text_color(0, msi.k, 2);
-				cur->right->marray->text_color(0, msi.j, 2);
-
-				cur->marray->grid[0][msi.k++] = cur->right->marray->grid[0][msi.j++];
-
-				if (msi.k < cur->marray->size_x)
-					cur->marray->text_color(0, msi.k, 3);
-				if (msi.j < cur->right->marray->size_x)
-					cur->right->marray->text_color(0, msi.j, 3);
-			}
-			cur->marray->next = true;
-		}
-		else if (msi.l)
-		{
-			cur->marray->text_color(0, msi.k, 2);
-			cur->left->marray->text_color(0, msi.i, 2);
-
-			cur->marray->grid[0][msi.k++] = cur->left->marray->grid[0][msi.i++];
-
-			if (msi.k < cur->marray->size_x)
-				cur->marray->text_color(0, msi.k, 3);
-			if (msi.i < cur->left->marray->size_x)
-				cur->left->marray->text_color(0, msi.i, 3);
-
-			cur->marray->next = true;
-		}
-		else if (msi.r)
-		{
-			cur->marray->text_color(0, msi.k, 2);
-			cur->right->marray->text_color(0, msi.j, 2);
-
-			cur->marray->grid[0][msi.k++] = cur->right->marray->grid[0][msi.j++];
-
-			if (msi.k < cur->marray->size_x)
-				cur->marray->text_color(0, msi.k, 3);
-			if (msi.j < cur->right->marray->size_x)
-				cur->right->marray->text_color(0, msi.j, 3);
-			cur->marray->next = true;
-		}
-		else
-		{
-			msi.reset();
-			if (cur == groot)
-			{
-				cur_step = -2;
-				return;
-			}
-			cur = cur->parent;
-			cur->ct--;
-			cur_step = 1;
-			return;
-		}
-
-	}
-
+	
 
 
 
