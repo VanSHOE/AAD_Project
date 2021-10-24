@@ -20,7 +20,7 @@ public:
 		class USceneComponent* TextScene;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "EW")
 		class UText3DComponent* Text;
-	uint64 val;
+	int64 val;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

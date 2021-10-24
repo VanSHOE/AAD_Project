@@ -22,13 +22,12 @@ AGraphEdge::AGraphEdge()
 void AGraphEdge::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	mt = Cylinder->GetMaterial(0);
 }
 
 // Called every frame
 void AGraphEdge::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 

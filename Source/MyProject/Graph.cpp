@@ -57,6 +57,18 @@ void AGraph::BeginPlay()
 	second.clear();
 	edges = 0;
 	bfc.reset();
+	bfo.clear();
+	bfo.assign(nodes, INT_MAX);	
+	bfknown.clear();
+	bfknown.assign(nodes, INT_MAX);
+	prev.clear();
+	for (int ii = 0; ii < nodes; ii++)
+	{
+		EdgeStorage q;
+		prev.push_back(q);
+	}
+	bfo[0] = 0;
+	bfknown[0] = 0;
 }
 
 // Called every frame
@@ -130,12 +142,19 @@ void AGraph::Tick(float DeltaTime)
 		if (j >= nodes)
 		{
 			i++;
-			j = i + 1;
+			j = 0;
 		}
 		if (i >= nodes - 1)
 		{
 			i = j = 0;
-			cur_step = 2;
+			cur_step = 3;
+			for (int ii = 0; ii < Edge_Store.size(); ii++)
+			{
+				int swap2 = rand() % Edge_Store.size();
+				auto temp = Edge_Store[ii];
+				Edge_Store[ii] = Edge_Store[swap2];
+				Edge_Store[swap2] = temp;
+			}
 			//second.push_back(Store[0]);
 			return;
 		}
@@ -180,7 +199,7 @@ void AGraph::Tick(float DeltaTime)
 					q.edge->SetActorScale3D(scale);
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
 					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
-					q.edge->Text->val = rand() % (2 * MaxWT);
+					q.edge->Text->val = rand() % (2*MaxWT) - MaxWT;
 					q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
 				//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
 				//	q.edge->dp->val = INT_MAX;
@@ -221,39 +240,97 @@ void AGraph::Tick(float DeltaTime)
 			bfc.j = 0;
 			bfc.i++;
 		}
-		if (bfc.i >= nodes - 1)
+		if (bfc.i >= nodes)
 		{
 			cur_step = -2;
 			return;
 		}
 		auto cedge = Edge_Store[bfc.j];
+		edge_color(cedge.edge, true);
 		UE_LOG(LogTemp, Warning, TEXT("%d: %d %d %d"),bfc.i, cedge.from->id, cedge.to->id, cedge.edge->Text->val);
-		if (mat->grid[bfc.i][cedge.from->id] != INT_MAX && mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val < mat->grid[bfc.i][cedge.to->id])
+		/*	if (mat->grid[bfc.i][cedge.from->id] != INT_MAX && mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val < mat->grid[bfc.i][cedge.to->id])
 		{
 			mat->grid[bfc.i][cedge.to->id] = mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val;
 			UE_LOG(LogTemp, Warning, TEXT("in"));
+			mat->up(bfc.i, cedge.to->id);
+		}*/
+		UE_LOG(LogTemp, Warning, TEXT("%d < %d and from edge is %d "), bfo[cedge.from->id] + cedge.edge->Text->val, bfo[cedge.to->id],bfo[cedge.from->id]);
+		if (bfo[cedge.from->id] != INT_MAX && bfo[cedge.from->id] + cedge.edge->Text->val < bfo[cedge.to->id])
+		{
+			bfo[cedge.to->id] = bfo[cedge.from->id] + cedge.edge->Text->val;
+			UE_LOG(LogTemp, Warning, TEXT("in"));
+		}
+		if (bfo[cedge.to->id] != INT_MAX)
+		{
+			mat->grid[bfc.i][cedge.to->id] = bfo[cedge.to->id];
 			mat->up(bfc.i, cedge.to->id);
 		}
 		bfc.j++;
 	}
 	else if (cur_step == 3)
-	{
-		if (!next && !AUTO)
+	{	
+		for (int ii = 0; ii < nodes - 1; ii++)
 		{
+			for (int jj = 0; jj < edges; jj++)
+			{
+				auto cedge = Edge_Store[jj];
+				if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
+				{
+					bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
+					prev[cedge.to->id] = cedge;
+				}
+			}
+		}
+		
+		for (int jj = 0; jj < edges; jj++)
+		{
+			auto cedge = Edge_Store[jj];
+			if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
+			{
+				bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
+				prev[cedge.to->id] = cedge;
+				NegativeCycle = true;
+				cur_step = -2;
+				return;
+			}
+		}
+
+		int curr = -1;
+		int mxx = -1;
+		for (int ii = 1; ii < nodes; ii++)
+		{
+			int len = 0;
+			//auto cedge = Edge_Store[ii];
+
+			if (bfknown[ii] == INT_MAX) continue;
+			int temp = ii;
+			while (temp)
+			{
+				len++;
+				temp = prev[temp].from->id;
+			}
+			if (len >= mxx)
+			{
+				mxx = len;
+				curr = ii;
+			}
+		}
+		if (curr == -1)
+		{
+			cur_step = 2;
 			return;
-		}	
-		next = false;
+		}
 
-
-
-
-
-
-
+		auto temp = curr;
+		while (temp)
+		{
+			auto e = prev[temp];
+			edge_color(e.edge, true, true);
+			temp = e.from->id;
+		}
+		cur_step = 2;
 	}
-	
 }
-
 
 void AGraph::r_graph(bool& retflag)
 {
@@ -282,7 +359,24 @@ void AGraph::node_color(AGraphNode* n, bool green)
 	else dyn->SetScalarParameterValue(TEXT("Opacity"), 0.75f);
 	comp->SetMaterial(0, dyn);
 }
+void AGraph::edge_color(AGraphEdge* n, bool green, bool shine)
+{
+	UStaticMeshComponent* comp = Cast<UStaticMeshComponent>(n->GetComponentByClass(UStaticMeshComponent::StaticClass()));
+	auto mt = n->mt;
+	auto dyn = UMaterialInstanceDynamic::Create(mt, NULL);
+	if (shine)
+	{
+		dyn->SetScalarParameterValue(TEXT("light"), 3.f);
+	}
+	else dyn->SetScalarParameterValue(TEXT("light"), 0.f);
 
+	if (green)
+	{
+		dyn->SetScalarParameterValue(TEXT("colsel"), 1.f);
+	}
+	else dyn->SetScalarParameterValue(TEXT("colsel"), 0.f);
+	comp->SetMaterial(0, dyn);
+}
 FString AGraph::c2s(int l, int r)
 {
 	return "[" + FString::FromInt(l) + ", " + FString::FromInt(r) + ")";

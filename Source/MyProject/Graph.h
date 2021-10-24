@@ -64,9 +64,14 @@ public:
 	std::vector<AGraphNode*> Store;
 	struct EdgeStorage
 	{
-		AGraphEdge* edge;
-		AGraphNode* from;
-		AGraphNode* to;
+		AGraphEdge* edge = nullptr;
+		AGraphNode* from = nullptr;
+		AGraphNode* to = nullptr;
+		EdgeStorage()
+		{
+			edge = nullptr;
+			from = to = nullptr;
+		}
 	};
 	std::vector<EdgeStorage> Edge_Store;
 
@@ -96,6 +101,7 @@ public:
 	FVector SpawnPosition;
 	FActorSpawnParameters SpawnParamenters;
 	void node_color(AGraphNode* n, bool green);
+	void edge_color(AGraphEdge* n, bool green = true, bool shine = true);
 	class AGrid* mat;
 	UPROPERTY(EditAnywhere)
 		double delay = 0.01f;
@@ -135,4 +141,11 @@ private:
 		}
 	} bfc;
 
+	UPROPERTY(VisibleAnywhere)
+		bool NegativeCycle = false;
+
+
+	std::vector<int64> bfo;
+	std::vector<int64> bfknown;
+	std::vector<EdgeStorage> prev;
 };

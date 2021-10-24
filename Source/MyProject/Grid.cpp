@@ -90,8 +90,13 @@ void AGrid::Tick(float DeltaTime)
 		if (I >= size_y)
 		{
 			cur_step++;
-			grid[0][0] = 0;
-			grid3d[0][0]->Text->SetText(FText::FromString(TEXT("0")));
+			for (int ii = 0; ii < size_y; ii++)
+			{
+				grid[ii][0] = 0;
+				grid3d[ii][0]->Text->SetText(FText::FromString(TEXT("0")));
+			}
+
+
 			//next = true;
 			I = j = 0;
 			return;

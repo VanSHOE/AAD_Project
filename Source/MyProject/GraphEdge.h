@@ -23,7 +23,7 @@ public:
 	AEWeight* dp = nullptr;
 
 	AGraphEdge();
-
+	UMaterialInterface* mt;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
