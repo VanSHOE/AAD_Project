@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include <vector>
 #include <deque>
+#include <unordered_set>
 #include "EdgeHead.h"
 #include "GraphNode.h"
 #include "EWeight.h"
@@ -143,8 +144,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 		bool NegativeCycle = false;
+	UPROPERTY(VisibleAnywhere)
+		int MaxIt = 0;
 
-
+	std::unordered_set<AGraphEdge*> inPath;
 	std::vector<int64> bfo;
 	std::vector<int64> bfknown;
 	std::vector<EdgeStorage> prev;

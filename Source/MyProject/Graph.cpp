@@ -69,6 +69,7 @@ void AGraph::BeginPlay()
 	}
 	bfo[0] = 0;
 	bfknown[0] = 0;
+	inPath.clear();
 }
 
 // Called every frame
@@ -199,7 +200,7 @@ void AGraph::Tick(float DeltaTime)
 					q.edge->SetActorScale3D(scale);
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
 					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
-					q.edge->Text->val = rand() % (2*MaxWT) - MaxWT;
+					q.edge->Text->val = rand() % (2 * MaxWT);// -MaxWT;
 					q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
 				//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
 				//	q.edge->dp->val = INT_MAX;
@@ -239,6 +240,10 @@ void AGraph::Tick(float DeltaTime)
 		{
 			bfc.j = 0;
 			bfc.i++;
+			for (int qq = 0; qq < Edge_Store.size(); qq++)
+			{
+				edge_color(Edge_Store[qq].edge, false, false);
+			}
 		}
 		if (bfc.i >= nodes)
 		{
@@ -246,7 +251,7 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		auto cedge = Edge_Store[bfc.j];
-		edge_color(cedge.edge, true);
+		edge_color(cedge.edge, false, true);
 		UE_LOG(LogTemp, Warning, TEXT("%d: %d %d %d"),bfc.i, cedge.from->id, cedge.to->id, cedge.edge->Text->val);
 		/*	if (mat->grid[bfc.i][cedge.from->id] != INT_MAX && mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val < mat->grid[bfc.i][cedge.to->id])
 		{
@@ -269,17 +274,21 @@ void AGraph::Tick(float DeltaTime)
 	}
 	else if (cur_step == 3)
 	{	
+		
 		for (int ii = 0; ii < nodes - 1; ii++)
 		{
+			bool over = true;
 			for (int jj = 0; jj < edges; jj++)
 			{
 				auto cedge = Edge_Store[jj];
 				if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
 				{
+					over = false;
 					bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
 					prev[cedge.to->id] = cedge;
 				}
 			}
+			if (!over) MaxIt++;
 		}
 		
 		for (int jj = 0; jj < edges; jj++)
@@ -290,7 +299,7 @@ void AGraph::Tick(float DeltaTime)
 				bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
 				prev[cedge.to->id] = cedge;
 				NegativeCycle = true;
-				cur_step = -2;
+				cur_step = 2;
 				return;
 			}
 		}
@@ -325,7 +334,8 @@ void AGraph::Tick(float DeltaTime)
 		while (temp)
 		{
 			auto e = prev[temp];
-			edge_color(e.edge, true, true);
+			edge_color(e.edge, true, false);
+			inPath.insert(e.edge);
 			temp = e.from->id;
 		}
 		cur_step = 2;
@@ -370,11 +380,12 @@ void AGraph::edge_color(AGraphEdge* n, bool green, bool shine)
 	}
 	else dyn->SetScalarParameterValue(TEXT("light"), 0.f);
 
-	if (green)
+	if (green || inPath.find(n) != inPath.end())
 	{
 		dyn->SetScalarParameterValue(TEXT("colsel"), 1.f);
 	}
 	else dyn->SetScalarParameterValue(TEXT("colsel"), 0.f);
+
 	comp->SetMaterial(0, dyn);
 }
 FString AGraph::c2s(int l, int r)
