@@ -37,15 +37,16 @@ public:
 		uint64 mn = 5;
 	uint64 fib_n = 5;
 
-	//UPROPERTY(EditAnywhere)
-		uint64 edges;
+	UPROPERTY(VisibleAnywhere)
+		uint64 edges = 0;
 	UPROPERTY(EditAnywhere)
 		int DistanceBetweenNodes = 400;
 	UPROPERTY(EditAnywhere)
 		int ProbabilityIn1byX = 5;
 	UPROPERTY(EditAnywhere)
 		int Ep = 5;
-
+	UPROPERTY(EditAnywhere)
+		int MaxWT = 5;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGrid> GBP;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
@@ -61,6 +62,14 @@ public:
 	uint64 k = 0;
 	std::vector<std::vector<std::vector<AGraphNode*>>> grid3d;
 	std::vector<AGraphNode*> Store;
+	struct EdgeStorage
+	{
+		AGraphEdge* edge;
+		AGraphNode* from;
+		AGraphNode* to;
+	};
+	std::vector<EdgeStorage> Edge_Store;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool next = false;
@@ -110,8 +119,20 @@ private:
 			l = r = true;
 		}
 	} msi;
+
 	AGraphNode* groot;
 	bool skip = false;
 	int cur_bfs = 0;
 	AGraphNode* cur;
+	struct bford
+	{
+		int i = 0;
+		int j = 1;
+		void reset()
+		{
+			i = 0;
+			j = 0;
+		}
+	} bfc;
+
 };

@@ -60,6 +60,8 @@ public:
 
 	void Sel(bool& retflag);
 
+	void up(int ii, int jj);
+
 	//UPROPERTY(VisibleAnywhere)
 	int p = 0;
 	//UPROPERTY(VisibleAnywhere)

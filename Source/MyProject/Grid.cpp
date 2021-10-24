@@ -34,6 +34,8 @@ void AGrid::BeginPlay()
 	mini = 0;
 	ToSearch = -1;
 	//std::vector<std::vector<uint32>> grid(size_y, std::vector<uint32>(size_x, 0));
+	grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x, nullptr));
+	grid.assign(size_y, std::vector<int>(size_x, INT_MAX));
 
 	SpawnParamenters.Owner = this;
 	SpawnPosition = GetActorLocation();
@@ -88,7 +90,9 @@ void AGrid::Tick(float DeltaTime)
 		if (I >= size_y)
 		{
 			cur_step++;
-			next = true;
+			grid[0][0] = 0;
+			grid3d[0][0]->Text->SetText(FText::FromString(TEXT("0")));
+			//next = true;
 			I = j = 0;
 			return;
 		}
@@ -101,8 +105,7 @@ void AGrid::Tick(float DeltaTime)
 		{
 			grid3d[I][j]->Wall_pY->ToggleVisibility();
 		}
-
-		grid3d[I][j]->Text->SetText(FText::FromString(FString::FromInt(grid[I][j])));
+		grid3d[I][j]->Text->SetText(FText::FromString(TEXT("Inf")));
 		j++;
 		SpawnPosition.X += 400;
 		p = 0;
@@ -112,13 +115,20 @@ void AGrid::Tick(float DeltaTime)
 	{
 		if (next || AUTO)
 		{
-			for (int i = 0; i < size_x; i++)
+			UE_LOG(LogTemp, Warning, TEXT("yo"))
+			for (int ii = 0; ii < size_y; ii++)
 			{
-				grid3d[0][i]->Text->SetText(FText::FromString(FString::FromInt(grid[0][i])));
+				for (int jj = 0; jj < size_x; jj++)
+					up(ii, jj);
 			}
 			next = false;
 		}
 	}
+}
+
+void AGrid::up(int ii, int jj)
+{
+	grid3d[ii][jj]->Text->SetText(FText::FromString(FString::FromInt(grid[ii][jj])));
 }
 
 void AGrid::Frac_K(bool& retflag)

@@ -39,6 +39,7 @@ void AGraph::BeginPlay()
 	oz = SpawnPosition.Z;
 	cur_bfs = 0;
 	Store.clear();
+	Edge_Store.clear();
 	if (nodes >= size_z * size_y * size_x)
 	{
 		nodes = size_z * size_y * size_x;
@@ -49,12 +50,13 @@ void AGraph::BeginPlay()
 	me.assign(fib_n + 1, false);
 	mem = false;
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
-	//TArray<AActor*> a;
-	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
+	TArray<AActor*> a;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
-	//mat = Cast<AGrid>(a[0]);
+	mat = Cast<AGrid>(a[0]);
 	second.clear();
-
+	edges = 0;
+	bfc.reset();
 }
 
 // Called every frame
@@ -114,6 +116,7 @@ void AGraph::Tick(float DeltaTime)
 				grid3d[i][j][k]->my_i = i;
 				grid3d[i][j][k]->my_j = j;
 				grid3d[i][j][k]->my_k = k;
+				grid3d[i][j][k]->id = grid3d[i][j][k]->val;
 				cnodes++;
 				Store.push_back(grid3d[i][j][k]);
 			}
@@ -133,7 +136,7 @@ void AGraph::Tick(float DeltaTime)
 		{
 			i = j = 0;
 			cur_step = 2;
-			second.push_back(Store[0]);
+			//second.push_back(Store[0]);
 			return;
 		}
 		if (i == j)
@@ -164,7 +167,6 @@ void AGraph::Tick(float DeltaTime)
 
 			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("You hit: %s"), *HitResult->Actor->GetName()));
 			auto who = HitResult->GetActor();
-			bool make = false;
 			if (who->IsA(AGraphNode::StaticClass()) && rand() % Ep == 0)
 			{
 				AGraphNode* hit_node = Cast<AGraphNode>(who);
@@ -177,34 +179,31 @@ void AGraph::Tick(float DeltaTime)
 					FVector scale = { 1, 1, dir.Size() - (100 + headsize) };
 					q.edge->SetActorScale3D(scale);
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
-					GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
-
-
-
-
-
-
-
-
-
-
+					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
+					q.edge->Text->val = rand() % (2 * MaxWT);
+					q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
+				//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
+				//	q.edge->dp->val = INT_MAX;
+				//	q.edge->dp->Text->SetText(FText::FromString(TEXT("Inf")));
+			
 					q.i = Store[j]->my_i;
 					q.j = Store[j]->my_j;
 					q.k = Store[j]->my_k;
 					q.nbor = Store[j];
 					Store[i]->edges.push_back(q);
+					EdgeStorage qq;
+					qq.from = Store[i];
+					qq.to = Store[j];
+					qq.edge = q.edge;
+					Edge_Store.push_back(qq);
+
+					edges++;
 					//q.i = Store[i]->my_i;
 					//q.j = Store[i]->my_j;
 					//q.k = Store[i]->my_k;
 					//q.nbor = Store[i];
 					//Store[j]->edges.push_back(q);
-					make = true;
 				}
-			}
-			if (!make)
-			{
-				//UE_LOG(LogTemp, Warning, TEXT("Edge not made from %s to %s because %s was in the way!"), *Store[i]->GetName(), *Store[j]->GetName(), *who->GetName());
-				//DrawDebugLine(GetWorld(), StartTrace, EndTrace, FColor(255, 0, 0), true);
 			}
 		}
 
@@ -217,80 +216,41 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-
-		if (second.size() == 0)
+		if (bfc.j >= edges)
 		{
-			cur_step = 4;
+			bfc.j = 0;
+			bfc.i++;
+		}
+		if (bfc.i >= nodes - 1)
+		{
+			cur_step = -2;
 			return;
 		}
-		cur = second[0];
-		cur->visited = true;
-		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *cur->GetName());
-		node_color(cur, 0);
-		second.pop_front();
-		cur_bfs = 0;
-		cur_step = 3;
-		if (cur->edges.size() == 0) skip = true;
+		auto cedge = Edge_Store[bfc.j];
+		UE_LOG(LogTemp, Warning, TEXT("%d: %d %d %d"),bfc.i, cedge.from->id, cedge.to->id, cedge.edge->Text->val);
+		if (mat->grid[bfc.i][cedge.from->id] != INT_MAX && mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val < mat->grid[bfc.i][cedge.to->id])
+		{
+			mat->grid[bfc.i][cedge.to->id] = mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val;
+			UE_LOG(LogTemp, Warning, TEXT("in"));
+			mat->up(bfc.i, cedge.to->id);
+		}
+		bfc.j++;
 	}
 	else if (cur_step == 3)
-	{
-		if (!next && !AUTO && !skip)
-		{
-			return;
-		}
-		next = false;
-		skip = false;
-		if (cur_bfs >= cur->edges.size())
-		{
-			cur_step--;
-			cur_bfs = 0;
-			return;
-		}
-		UE_LOG(LogTemp, Warning, TEXT("On  %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
-		if (cur->edges[cur_bfs].nbor->visited == false)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Adding %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
-			node_color(cur->edges[cur_bfs].nbor, 1);
-			cur->edges[cur_bfs].nbor->visited = true;
-			second.push_back(cur->edges[cur_bfs].nbor);
-		}
-		else skip = true;
-		cur_bfs++;
-	}
-	else if (cur_step == 4)
 	{
 		if (!next && !AUTO)
 		{
 			return;
-		}
+		}	
 		next = false;
-		UE_LOG(LogTemp, Warning, TEXT("We are now searching"));
-		for (int ii = 0; ii < Store.size(); ii++)
-		{
-			if (Store[ii]->visited == false)
-			{
-				//cur = Store[ii];
-				second.push_back(Store[ii]);
-				node_color(cur, 0);
-				cur_step = 2;
-				return;
-			}
-		}
-		cur_step = 99;
-	
+
+
+
+
+
+
+
 	}
-	
-
-
-
-
-
-	
-	
-	
-	
-
-	
 	
 }
 

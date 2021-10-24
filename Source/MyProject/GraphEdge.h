@@ -20,7 +20,8 @@ public:
 		class UStaticMeshComponent* Cylinder;
 	
 	AEWeight* Text = nullptr;
-	
+	AEWeight* dp = nullptr;
+
 	AGraphEdge();
 
 protected:

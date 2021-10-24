@@ -48,7 +48,7 @@ public:
 	int my_i;
 	int my_j;
 	int my_k;
-
+	int id;
 	FVector SpawnPosition;
 	bool visited = false;
 
