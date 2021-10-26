@@ -55,6 +55,7 @@ void AGraph::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
 	mat = Cast<AGrid>(a[0]);
+	pqmat = Cast<AGrid>(a[1]);
 	second.clear();
 	edges = 0;
 	bfc.reset();
@@ -259,6 +260,7 @@ void AGraph::Tick(float DeltaTime)
 		node_color(curnode, 1);
 		mat->up(0, curnode->id, pq.begin()->first);
 		pq.erase(pq.begin());
+		setpq();
 		curnode->visited = true;
 		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *curnode->GetName());
 		cur_step++;
@@ -284,6 +286,8 @@ void AGraph::Tick(float DeltaTime)
 		{
 			e.nbor->val = curnode->val + e.edge->Text->val;
 			pq.insert({ e.nbor->val, e.nbor });
+			//if(!AUTO)
+			setpq();
 		}
 	}
 }
@@ -340,10 +344,17 @@ FString AGraph::c2s(int32 l, int32 r)
 }
 void AGraph::setpq()
 {
-
-
-
-
-
+	int ii = 0;
+	for (auto x : pq)
+	{	
+		if (ii >= pqmat->size_y) return;
+		FString pqstring = c2s(x.second->id, x.first);
+		pqmat->grid3d[ii++][0]->Text->SetText(FText::FromString(pqstring));
+	}
+	while (ii < pqmat->size_y)
+	{
+		pqmat->grid3d[ii][0]->Text->SetText(FText::FromString("-"));
+		ii++;
+	}
 
 }

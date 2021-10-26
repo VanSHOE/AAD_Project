@@ -105,6 +105,7 @@ public:
 	void node_color(AGraphNode* n, bool green);
 	void edge_color(AGraphEdge* n, bool green = true, bool shine = true);
 	class AGrid* mat;
+	class AGrid* pqmat;
 	UPROPERTY(EditAnywhere)
 		double delay = 0.01f;
 	FString c2s(int l, int r);
