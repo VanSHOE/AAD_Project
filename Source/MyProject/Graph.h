@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include <vector>
+#include <set>
 #include <deque>
 #include <unordered_set>
 #include "EdgeHead.h"
@@ -23,20 +24,20 @@ class MYPROJECT_API AGraph : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AGraph();
-	uint64 min(uint64 a, uint64 b);
+	int64 min(int64 a, int64 b);
 
 	UPROPERTY(EditAnywhere)
-		uint64 size_x;
+		int64 size_x;
 	UPROPERTY(EditAnywhere)
-		uint64 size_y;
+		int64 size_y;
 	UPROPERTY(EditAnywhere)
-		uint64 size_z;
+		int64 size_z;
 	UPROPERTY(EditAnywhere)
-		uint64 nodes;
+		int64 nodes;
 
 	//UPROPERTY(EditAnywhere)
-		uint64 mn = 5;
-	uint64 fib_n = 5;
+		int64 mn = 5;
+	int64 fib_n = 5;
 
 	UPROPERTY(VisibleAnywhere)
 		uint64 edges = 0;
@@ -58,9 +59,9 @@ public:
 		TSubclassOf<AEdgeHead> Head;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AEWeight> WtText;
-	uint64 i = 0;
-	uint64 j = 0;
-	uint64 k = 0;
+	int64 i = 0;
+	int64 j = 0;
+	int64 k = 0;
 	std::vector<std::vector<std::vector<AGraphNode*>>> grid3d;
 	std::vector<AGraphNode*> Store;
 	struct EdgeStorage
@@ -107,6 +108,7 @@ public:
 	UPROPERTY(EditAnywhere)
 		double delay = 0.01f;
 	FString c2s(int l, int r);
+	void setpq();
 private:
 	int c_val = 0;
 	int g_index;
@@ -142,13 +144,16 @@ private:
 		}
 	} bfc;
 
-	UPROPERTY(VisibleAnywhere)
-		bool NegativeCycle = false;
-	UPROPERTY(VisibleAnywhere)
-		int MaxIt = 0;
+	//UPROPERTY(VisibleAnywhere)
+		//bool NegativeCycle = false;
+	//UPROPERTY(VisibleAnywhere)
+		//int MaxIt = 0;
 
+	std::set <std::pair<int64, AGraphNode*>> pq; 
 	std::unordered_set<AGraphEdge*> inPath;
 	std::vector<int64> bfo;
 	std::vector<int64> bfknown;
 	std::vector<EdgeStorage> prev;
+	AGraphNode* curnode = nullptr;
+	int DCcounter = 0;
 };

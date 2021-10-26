@@ -37,6 +37,7 @@ void AGraph::BeginPlay()
 	ox = SpawnPosition.X;
 	oy = SpawnPosition.Y;
 	oz = SpawnPosition.Z;
+	pq.clear();
 	cur_bfs = 0;
 	Store.clear();
 	Edge_Store.clear();
@@ -70,6 +71,7 @@ void AGraph::BeginPlay()
 	bfo[0] = 0;
 	bfknown[0] = 0;
 	inPath.clear();
+	curnode = nullptr;
 }
 
 // Called every frame
@@ -124,12 +126,13 @@ void AGraph::Tick(float DeltaTime)
 			if (rand() % ProbabilityIn1byX == 0)
 			{
 				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-				grid3d[i][j][k]->val = c_val;
+				grid3d[i][j][k]->val = INT_MAX;
+				grid3d[i][j][k]->id = c_val;
 				grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(c_val++)));
 				grid3d[i][j][k]->my_i = i;
 				grid3d[i][j][k]->my_j = j;
 				grid3d[i][j][k]->my_k = k;
-				grid3d[i][j][k]->id = grid3d[i][j][k]->val;
+				
 				cnodes++;
 				Store.push_back(grid3d[i][j][k]);
 			}
@@ -148,14 +151,18 @@ void AGraph::Tick(float DeltaTime)
 		if (i >= nodes - 1)
 		{
 			i = j = 0;
-			cur_step = 3;
-			for (int ii = 0; ii < Edge_Store.size(); ii++)
+			cur_step = 2;
+			pq.insert({ 0, Store[0] });
+			Store[0]->val = 0;
+			/*
+			for (int ii = 0; ii < Edge_Store.size() / 2; ii++)
 			{
-				int swap2 = rand() % Edge_Store.size();
+				int swap2 = Edge_Store.size() - 1 - ii; //rand() % Edge_Store.size();
 				auto temp = Edge_Store[ii];
 				Edge_Store[ii] = Edge_Store[swap2];
 				Edge_Store[swap2] = temp;
 			}
+			*/
 			//second.push_back(Store[0]);
 			return;
 		}
@@ -184,7 +191,6 @@ void AGraph::Tick(float DeltaTime)
 
 		if (GetWorld()->LineTraceSingleByChannel(*HitResult, StartTrace, EndTrace, ECC_Visibility, *TraceParams))
 		{
-
 			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("You hit: %s"), *HitResult->Actor->GetName()));
 			auto who = HitResult->GetActor();
 			if (who->IsA(AGraphNode::StaticClass()) && rand() % Ep == 0)
@@ -200,7 +206,7 @@ void AGraph::Tick(float DeltaTime)
 					q.edge->SetActorScale3D(scale);
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
 					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
-					q.edge->Text->val = rand() % (2 * MaxWT);// -MaxWT;
+					q.edge->Text->val = rand() % MaxWT;
 					q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
 				//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
 				//	q.edge->dp->val = INT_MAX;
@@ -236,109 +242,49 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-		if (bfc.j >= edges)
+
+		if (pq.size() == 0)
 		{
-			bfc.j = 0;
-			bfc.i++;
-			for (int qq = 0; qq < Edge_Store.size(); qq++)
-			{
-				edge_color(Edge_Store[qq].edge, false, false);
-			}
-		}
-		if (bfc.i >= nodes)
-		{
-			cur_step = -2;
+			cur_step = -99;
 			return;
 		}
-		auto cedge = Edge_Store[bfc.j];
-		edge_color(cedge.edge, false, true);
-		UE_LOG(LogTemp, Warning, TEXT("%d: %d %d %d"),bfc.i, cedge.from->id, cedge.to->id, cedge.edge->Text->val);
-		/*	if (mat->grid[bfc.i][cedge.from->id] != INT_MAX && mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val < mat->grid[bfc.i][cedge.to->id])
+
+		curnode = pq.begin()->second;
+		if (curnode->visited == true)
 		{
-			mat->grid[bfc.i][cedge.to->id] = mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val;
-			UE_LOG(LogTemp, Warning, TEXT("in"));
-			mat->up(bfc.i, cedge.to->id);
-		}*/
-		UE_LOG(LogTemp, Warning, TEXT("%d < %d and from edge is %d "), bfo[cedge.from->id] + cedge.edge->Text->val, bfo[cedge.to->id],bfo[cedge.from->id]);
-		if (bfo[cedge.from->id] != INT_MAX && bfo[cedge.from->id] + cedge.edge->Text->val < bfo[cedge.to->id])
-		{
-			bfo[cedge.to->id] = bfo[cedge.from->id] + cedge.edge->Text->val;
-			UE_LOG(LogTemp, Warning, TEXT("in"));
+			pq.erase(pq.begin());
+			curnode = nullptr;
+			return;
 		}
-		if (bfo[cedge.to->id] != INT_MAX)
-		{
-			mat->grid[bfc.i][cedge.to->id] = bfo[cedge.to->id];
-			mat->up(bfc.i, cedge.to->id);
-		}
-		bfc.j++;
+		node_color(curnode, 1);
+		mat->up(0, curnode->id, pq.begin()->first);
+		pq.erase(pq.begin());
+		curnode->visited = true;
+		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *curnode->GetName());
+		cur_step++;
+		DCcounter = 0;
 	}
 	else if (cur_step == 3)
-	{	
-		
-		for (int ii = 0; ii < nodes - 1; ii++)
+	{
+		if (!next && !AUTO)
 		{
-			bool over = true;
-			for (int jj = 0; jj < edges; jj++)
-			{
-				auto cedge = Edge_Store[jj];
-				if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
-				{
-					over = false;
-					bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
-					prev[cedge.to->id] = cedge;
-				}
-			}
-			if (!over) MaxIt++;
-		}
-		
-		for (int jj = 0; jj < edges; jj++)
-		{
-			auto cedge = Edge_Store[jj];
-			if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
-			{
-				bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
-				prev[cedge.to->id] = cedge;
-				NegativeCycle = true;
-				cur_step = 2;
-				return;
-			}
-		}
-
-		int curr = -1;
-		int mxx = -1;
-		for (int ii = 1; ii < nodes; ii++)
-		{
-			int len = 0;
-			//auto cedge = Edge_Store[ii];
-
-			if (bfknown[ii] == INT_MAX) continue;
-			int temp = ii;
-			while (temp)
-			{
-				len++;
-				temp = prev[temp].from->id;
-			}
-			if (len >= mxx)
-			{
-				mxx = len;
-				curr = ii;
-			}
-		}
-		if (curr == -1)
-		{
-			cur_step = 2;
 			return;
 		}
-
-		auto temp = curr;
-		while (temp)
+		next = false;
+		if (DCcounter >= curnode->edges.size())
 		{
-			auto e = prev[temp];
-			edge_color(e.edge, true, false);
-			inPath.insert(e.edge);
-			temp = e.from->id;
+			DCcounter = 0;
+			cur_step--;
+			return;
 		}
-		cur_step = 2;
+		auto e = curnode->edges[DCcounter++];
+		edge_color(e.edge, false, true);
+		UE_LOG(LogTemp, Warning, TEXT("Adding %s on pq, from %s"), *e.nbor->GetName(), *curnode->GetName());
+		if (e.nbor->visited == false && (e.nbor->val == INT_MAX || curnode->val + e.edge->Text->val < e.nbor->val))
+		{
+			e.nbor->val = curnode->val + e.edge->Text->val;
+			pq.insert({ e.nbor->val, e.nbor });
+		}
 	}
 }
 
@@ -350,7 +296,7 @@ void AGraph::r_graph(bool& retflag)
 	retflag = false;
 }
 
-uint64 AGraph::min(uint64 a, uint64 b)
+int64 AGraph::min(int64 a, int64 b)
 {
 	if (a < b) return a;
 	return b;
@@ -388,7 +334,16 @@ void AGraph::edge_color(AGraphEdge* n, bool green, bool shine)
 
 	comp->SetMaterial(0, dyn);
 }
-FString AGraph::c2s(int l, int r)
+FString AGraph::c2s(int32 l, int32 r)
 {
-	return "[" + FString::FromInt(l) + ", " + FString::FromInt(r) + ")";
+	return "(" + FString::FromInt(l) + ", " + FString::FromInt(r) + ")";
+}
+void AGraph::setpq()
+{
+
+
+
+
+
+
 }

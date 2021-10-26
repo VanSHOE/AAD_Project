@@ -32,18 +32,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGrid_Cell> CellBP;
 	std::vector<std::vector<AGrid_Cell*>> grid3d;
-	std::vector<std::vector<int>> grid;
+	std::vector<std::vector<int64>> grid;
 	UPROPERTY(EditAnywhere)
 		double delay;
 
 	//UPROPERTY(EditAnywhere)
-		uint64 space_left = 500;
+		int64 space_left = 500;
 	UPROPERTY(EditAnywhere)
-		uint64 size_x = 100;
+		int64 size_x = 100;
 	UPROPERTY(EditAnywhere)
-		uint64 size_y = 100;
+		int64 size_y = 100;
 	UPROPERTY(VisibleAnywhere)
-		uint64 total_value = 0;
+		int64 total_value = 0;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -60,7 +60,7 @@ public:
 
 	void Sel(bool& retflag);
 
-	void up(int ii, int jj);
+	void up(int ii, int jj, int val);
 
 	//UPROPERTY(VisibleAnywhere)
 	int p = 0;

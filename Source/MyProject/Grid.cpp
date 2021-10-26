@@ -35,7 +35,7 @@ void AGrid::BeginPlay()
 	ToSearch = -1;
 	//std::vector<std::vector<uint32>> grid(size_y, std::vector<uint32>(size_x, 0));
 	grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x, nullptr));
-	grid.assign(size_y, std::vector<int>(size_x, INT_MAX));
+	grid.assign(size_y, std::vector<int64>(size_x, INT_MAX));
 
 	SpawnParamenters.Owner = this;
 	SpawnPosition = GetActorLocation();
@@ -124,15 +124,16 @@ void AGrid::Tick(float DeltaTime)
 			for (int ii = 0; ii < size_y; ii++)
 			{
 				for (int jj = 0; jj < size_x; jj++)
-					up(ii, jj);
+					up(ii, jj, grid[ii][jj]);
 			}
 			next = false;
 		}
 	}
 }
 
-void AGrid::up(int ii, int jj)
+void AGrid::up(int ii, int jj, int val)
 {
+	grid[ii][jj] = val;
 	grid3d[ii][jj]->Text->SetText(FText::FromString(FString::FromInt(grid[ii][jj])));
 }
 

@@ -31,7 +31,7 @@ public:
 		uint64 r;
 	} qval;
 
-	int val;
+	int64 val;
 
 	APawn* player = nullptr;
 	AGraphNode* parent = nullptr;
