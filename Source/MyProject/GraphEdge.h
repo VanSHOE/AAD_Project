@@ -21,7 +21,7 @@ public:
 	
 	AEWeight* Text = nullptr;
 	AEWeight* dp = nullptr;
-
+	bool g = false;
 	AGraphEdge();
 	UMaterialInterface* mt;
 protected:

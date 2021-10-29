@@ -36,6 +36,7 @@ void AGraphNode::BeginPlay()
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
 	player = Cast<APawn>(a[0]);
 	mt = Sphere->GetMaterial(0);
+	mstEdge = nullptr;
 }
 
 // Called every frame

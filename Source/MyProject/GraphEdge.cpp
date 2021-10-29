@@ -23,6 +23,7 @@ void AGraphEdge::BeginPlay()
 {
 	Super::BeginPlay();
 	mt = Cylinder->GetMaterial(0);
+	g = false;
 }
 
 // Called every frame

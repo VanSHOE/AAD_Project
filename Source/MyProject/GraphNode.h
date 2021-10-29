@@ -32,7 +32,7 @@ public:
 	} qval;
 
 	int64 val;
-
+	AGraphEdge* mstEdge;
 	APawn* player = nullptr;
 	AGraphNode* parent = nullptr;
 	AGraphNode* left = nullptr;

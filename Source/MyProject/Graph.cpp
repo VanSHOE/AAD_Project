@@ -202,7 +202,7 @@ void AGraph::Tick(float DeltaTime)
 					q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
 					auto hlocl = Tarloc;
 					hlocl -= (50.f + headsize) * ForwardVector;
-					GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParamenters);
+					//GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParamenters);
 					FVector scale = { 1, 1, dir.Size() - (100 + headsize) };
 					q.edge->SetActorScale3D(scale);
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
@@ -218,18 +218,18 @@ void AGraph::Tick(float DeltaTime)
 					q.k = Store[j]->my_k;
 					q.nbor = Store[j];
 					Store[i]->edges.push_back(q);
-					EdgeStorage qq;
-					qq.from = Store[i];
-					qq.to = Store[j];
-					qq.edge = q.edge;
-					Edge_Store.push_back(qq);
+				//	EdgeStorage qq;
+				//	qq.from = Store[i];
+				//	qq.to = Store[j];
+				//	qq.edge = q.edge;
+				//	Edge_Store.push_back(qq);
 
+					q.i = Store[i]->my_i;
+					q.j = Store[i]->my_j;
+					q.k = Store[i]->my_k;
+					q.nbor = Store[i];
+					Store[j]->edges.push_back(q);
 					edges++;
-					//q.i = Store[i]->my_i;
-					//q.j = Store[i]->my_j;
-					//q.k = Store[i]->my_k;
-					//q.nbor = Store[i];
-					//Store[j]->edges.push_back(q);
 				}
 			}
 		}
@@ -257,6 +257,10 @@ void AGraph::Tick(float DeltaTime)
 			curnode = nullptr;
 			return;
 		}
+		if (curnode->mstEdge)
+		{
+			edge_color(curnode->mstEdge, true, true);
+		}
 		node_color(curnode, 1);
 		mat->up(0, curnode->id, pq.begin()->first);
 		pq.erase(pq.begin());
@@ -272,6 +276,7 @@ void AGraph::Tick(float DeltaTime)
 		{
 			return;
 		}
+
 		next = false;
 		if (DCcounter >= curnode->edges.size())
 		{
@@ -280,13 +285,16 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		auto e = curnode->edges[DCcounter++];
-		edge_color(e.edge, false, true);
+		if(e.edge->g == false)
+			edge_color(e.edge, false, true);
 		UE_LOG(LogTemp, Warning, TEXT("Adding %s on pq, from %s"), *e.nbor->GetName(), *curnode->GetName());
-		if (e.nbor->visited == false && (e.nbor->val == INT_MAX || curnode->val + e.edge->Text->val < e.nbor->val))
+		if (e.nbor->visited == false && (e.nbor->val == INT_MAX || e.edge->Text->val < e.nbor->val))
 		{
-			e.nbor->val = curnode->val + e.edge->Text->val;
+			node_color(e.nbor, 0);
+			e.nbor->mstEdge = e.edge;
+			e.nbor->val = e.edge->Text->val;
+			e.edge->g = true;
 			pq.insert({ e.nbor->val, e.nbor });
-			//if(!AUTO)
 			setpq();
 		}
 	}
@@ -311,7 +319,7 @@ void AGraph::node_color(AGraphNode* n, bool green)
 	UStaticMeshComponent* comp = Cast<UStaticMeshComponent>(n->GetComponentByClass(UStaticMeshComponent::StaticClass()));
 	auto mt = n->mt;
 	auto dyn = UMaterialInstanceDynamic::Create(mt, NULL);
-	if (green == 0)
+	if (green)
 	{
 		dyn->SetScalarParameterValue(TEXT("Opacity"), 0.75f);
 		dyn->SetScalarParameterValue(TEXT("col"), 1);
@@ -330,7 +338,7 @@ void AGraph::edge_color(AGraphEdge* n, bool green, bool shine)
 	}
 	else dyn->SetScalarParameterValue(TEXT("light"), 0.f);
 
-	if (green || inPath.find(n) != inPath.end())
+	if (green) //|| inPath.find(n) != inPath.end())
 	{
 		dyn->SetScalarParameterValue(TEXT("colsel"), 1.f);
 	}
