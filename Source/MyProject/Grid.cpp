@@ -3,6 +3,7 @@
 
 #include "Grid.h"
 #include "Text3DComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include <stdlib.h>
 #if WITH_EDITOR
 #include "UnrealEd.h"
@@ -39,41 +40,22 @@ void AGrid::BeginPlay()
 
 	SpawnParamenters.Owner = this;
 	SpawnPosition = GetActorLocation();
-	//for (int i = 0; i < size_y; i++)
-	//{
-	//	for (int j = 0; j < size_x; j++)
-	//	{
-	//		grid3d[i][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-	//		SpawnPosition.X += 400;
-//		}
-	//	SpawnPosition.Y += 400;
-//	}
+	size_y = start.Len() + 1;
+	size_x = end.Len() + 1;
 
+	TArray<AActor*> a;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWord_3D::StaticClass(), a);
+	from = Cast<AWord_3D>(a[0]);
+	from->Text->SetText(FText::FromString(FString::FromInt(0)));
+	to = Cast<AWord_3D>(a[1]);
+	to->Text->SetText(FText::FromString(FString::FromInt(1)));
 }
 
-// Called every frame
-int required = 0;
-int sort_step = 0;
+// Called every frames
 
 void AGrid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	//UE_LOG(LogTemp, Warning, TEXT("%d %d"), p, q);
-	/*
-	last += DeltaTime;
-	if (last < delay)
-	{
-		return;
-	}
-	last = 0;
-	*/
-	// bool retflag;
-	// BubbleSort(retflag);
-	// Sel(retflag);
-	// SeqSearch(retflag);
-	// bsearch(retflag);
-	// Frac_K(retflag);
-	// if (retflag) return;
 	if (cur_step == -1)
 	{
 		cur_step++;
@@ -92,13 +74,15 @@ void AGrid::Tick(float DeltaTime)
 			cur_step++;
 			for (int ii = 0; ii < size_y; ii++)
 			{
-				grid[ii][0] = 0;
-				grid3d[ii][0]->Text->SetText(FText::FromString(TEXT("0")));
+				up(ii, 0, ii);
+			}
+			for (int ii = 0; ii < size_x; ii++)
+			{
+				up(0, ii, ii);
 			}
 
-
 			//next = true;
-			I = j = 0;
+			I = j = 1;
 			return;
 		}
 		grid3d[I][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
@@ -118,16 +102,45 @@ void AGrid::Tick(float DeltaTime)
 	}
 	else if (cur_step == 1)
 	{
-		if (next || AUTO)
+		if (!next && !AUTO)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("yo"))
-			for (int ii = 0; ii < size_y; ii++)
-			{
-				for (int jj = 0; jj < size_x; jj++)
-					up(ii, jj, grid[ii][jj]);
-			}
-			next = false;
+			return;
 		}
+		next = false;
+
+		if (j >= size_x)
+		{
+			I++;
+			j = 1;
+			return;
+		}
+		if (I >= size_y)
+		{
+			cur_step = -2;
+			return;
+		}
+
+		text_color(I, j, 1);
+		text_color(I - 1, j, 3);
+		text_color(I, j - 1, 3);
+		text_color(I - 1, j - 1, 3);
+		cur_step++;
+	}
+	else if (cur_step == 2)
+	{
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
+		int64 dpIVal = min(grid[I - 1][j] + 1, min(grid[I][j - 1] + 1, grid[I - 1][j - 1] + diff(start[I - 1], end[j - 1])));
+		up(I, j, dpIVal);
+		text_color(I, j, 2);
+		text_color(I - 1, j, 2);
+		text_color(I, j - 1, 2);
+		text_color(I - 1, j - 1, 2);
+		j++;
+		cur_step--;
 	}
 }
 
@@ -644,9 +657,10 @@ void AGrid::text_color(int c, int r, int col)
 {
 	auto mat = grid3d[c][r]->Text->FrontMaterial->GetMaterial();
 	auto dyn = UMaterialInstanceDynamic::Create(mat, NULL);
-	UE_LOG(LogTemp, Warning, TEXT("%d should be %d"), r, col);
+	//UE_LOG(LogTemp, Warning, TEXT("%d should be %d"), r, col);
 	if (col == 0 || col == 1)
 	{
+		
 		dyn->SetScalarParameterValue(TEXT("Blend1"), col);
 		dyn->SetScalarParameterValue(TEXT("Blend2"), 0);
 		dyn->SetScalarParameterValue(TEXT("Blend3"), 0);
@@ -668,3 +682,16 @@ void AGrid::text_color(int c, int r, int col)
 	grid3d[c][r]->Text->SetFrontMaterial(dyn);
 }
 
+int64 AGrid::min(int64 a, int64 b)
+{
+	if (a < b)
+		return a;
+	return b;
+}
+
+bool AGrid::diff(TCHAR a, TCHAR b)
+{
+	if (a != b)
+		return true;
+	return false;
+}

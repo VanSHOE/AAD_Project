@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include <vector>
 #include "Grid_Cell.h"
+#include "Word_3D.h"
 #include "Grid.generated.h"
 
 UCLASS()
@@ -26,7 +27,14 @@ public:
 
 	FVector SpawnPosition;
 	FActorSpawnParameters SpawnParamenters;
+	AWord_3D* from;
+	AWord_3D* to;
 
+
+	UPROPERTY(EditAnywhere)
+		FString start;
+	UPROPERTY(EditAnywhere)
+		FString end;
 
 	AGrid();
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
@@ -38,11 +46,11 @@ public:
 
 	//UPROPERTY(EditAnywhere)
 		int64 space_left = 500;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int64 size_x = 100;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int64 size_y = 100;
-	UPROPERTY(VisibleAnywhere)
+	//UPROPERTY(VisibleAnywhere)
 		int64 total_value = 0;
 protected:
 	// Called when the game starts or when spawned
@@ -62,6 +70,8 @@ public:
 
 	void up(int ii, int jj, int val);
 
+	int64 min(int64 a, int64 b);
+	bool diff(TCHAR a, TCHAR b);
 	//UPROPERTY(VisibleAnywhere)
 	int p = 0;
 	//UPROPERTY(VisibleAnywhere)
