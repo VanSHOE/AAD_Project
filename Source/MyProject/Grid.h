@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include <vector>
+#include <deque>
 #include "Grid_Cell.h"
 #include "Word_3D.h"
 #include "Grid.generated.h"
@@ -20,7 +21,6 @@ private:
 	int cur = 1;
 	int mid = -1;
 	int mini = 0;
-
 public:	
 	// Sets default values for this actor's properties
 
@@ -41,6 +41,8 @@ public:
 		TSubclassOf<AGrid_Cell> CellBP;
 	std::vector<std::vector<AGrid_Cell*>> grid3d;
 	std::vector<std::vector<int64>> grid;
+	
+	std::vector<std::vector<std::deque<FString>>> stringState;
 	UPROPERTY(EditAnywhere)
 		double delay;
 

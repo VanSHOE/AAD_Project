@@ -35,13 +35,14 @@ void AGrid::BeginPlay()
 	mini = 0;
 	ToSearch = -1;
 	//std::vector<std::vector<uint32>> grid(size_y, std::vector<uint32>(size_x, 0));
-	grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x, nullptr));
-	grid.assign(size_y, std::vector<int64>(size_x, INT_MAX));
-
-	SpawnParamenters.Owner = this;
-	SpawnPosition = GetActorLocation();
 	size_y = start.Len() + 1;
 	size_x = end.Len() + 1;
+	grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x, nullptr));
+	grid.assign(size_y, std::vector<int64>(size_x, INT_MAX));
+	stringState.assign(size_y, std::vector<std::deque<FString>>(size_x));
+	SpawnParamenters.Owner = this;
+	SpawnPosition = GetActorLocation();
+
 
 	TArray<AActor*> a;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWord_3D::StaticClass(), a);
@@ -56,6 +57,7 @@ void AGrid::BeginPlay()
 void AGrid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	if (cur_step == -1)
 	{
 		cur_step++;
@@ -72,13 +74,26 @@ void AGrid::Tick(float DeltaTime)
 		if (I >= size_y)
 		{
 			cur_step++;
+			stringState[0][0].push_front("");
 			for (int ii = 0; ii < size_y; ii++)
 			{
 				up(ii, 0, ii);
+				if (ii)
+				{
+					stringState[ii][0] = stringState[ii - 1][0];
+					FString temp = stringState[ii][0][0];
+					stringState[ii][0].push_front(temp + start[ii - 1]);
+				}
 			}
 			for (int ii = 0; ii < size_x; ii++)
 			{
 				up(0, ii, ii);
+				if (ii)
+				{
+					stringState[0][ii] = stringState[0][ii - 1];
+					FString temp = stringState[0][ii - 1].back();
+					stringState[0][ii].push_back(temp + end[ii - 1]);
+				}
 			}
 
 			//next = true;
@@ -124,6 +139,8 @@ void AGrid::Tick(float DeltaTime)
 		text_color(I - 1, j, 3);
 		text_color(I, j - 1, 3);
 		text_color(I - 1, j - 1, 3);
+
+
 		cur_step++;
 	}
 	else if (cur_step == 2)
@@ -133,8 +150,38 @@ void AGrid::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-		int64 dpIVal = min(grid[I - 1][j] + 1, min(grid[I][j - 1] + 1, grid[I - 1][j - 1] + diff(start[I - 1], end[j - 1])));
-		up(I, j, dpIVal);
+
+		int64 A = grid[I - 1][j] + 1;
+		int64 B = grid[I][j - 1] + 1;
+		int64 C = grid[I - 1][j - 1] + diff(start[I - 1], end[j - 1]);
+
+		UE_LOG(LogTemp, Error, TEXT("Test"));
+		
+		if (A <= B && A <= C)
+		{
+			stringState[I][j] = stringState[I - 1][j];
+			FString temp = stringState[I][j][0];
+			stringState[I][j].push_front(temp + );
+		}
+		else if (B <= A && B <= C)
+		{
+
+		}
+		else if (C <= A && C <= B)
+		{
+
+		}
+		else UE_LOG(LogTemp, Error, TEXT("SHOULD NOT HAPPEN"));
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		up(I, j, min(A, min(B, C)));
 		text_color(I, j, 2);
 		text_color(I - 1, j, 2);
 		text_color(I, j - 1, 2);
