@@ -47,9 +47,9 @@ void AGrid::BeginPlay()
 	TArray<AActor*> a;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWord_3D::StaticClass(), a);
 	from = Cast<AWord_3D>(a[0]);
-	from->Text->SetText(FText::FromString(FString::FromInt(0)));
+	from->Text->SetText(FText::FromString(start));
 	to = Cast<AWord_3D>(a[1]);
-	to->Text->SetText(FText::FromString(FString::FromInt(1)));
+	to->Text->SetText(FText::FromString(end));
 }
 
 // Called every frames
@@ -155,32 +155,45 @@ void AGrid::Tick(float DeltaTime)
 		int64 B = grid[I][j - 1] + 1;
 		int64 C = grid[I - 1][j - 1] + diff(start[I - 1], end[j - 1]);
 
-		UE_LOG(LogTemp, Error, TEXT("Test"));
+		//UE_LOG(LogTemp, Error, TEXT("Test"));
 		
 		if (A <= B && A <= C)
 		{
 			stringState[I][j] = stringState[I - 1][j];
 			FString temp = stringState[I][j][0];
-			stringState[I][j].push_front(temp + );
+			stringState[I][j].push_front(temp + start[I - 1]);
 		}
 		else if (B <= A && B <= C)
 		{
-
+			stringState[I][j] = stringState[I][j - 1];
+			FString temp = stringState[I][j].back();
+			stringState[I][j].push_back(temp + end[j - 1]);
 		}
 		else if (C <= A && C <= B)
 		{
-
+			stringState[I][j] = stringState[I - 1][j - 1];
+			
+			for (FString& x : stringState[I][j])
+			{
+				x += start[I - 1];
+			}
+			if (diff(start[I - 1], end[j - 1]))
+			{
+				auto temp = stringState[I][j].back();
+				temp[temp.Len() - 1] = end[j - 1];
+				stringState[I][j].push_back(temp);
+			}
 		}
 		else UE_LOG(LogTemp, Error, TEXT("SHOULD NOT HAPPEN"));
 		
-		
-		
-		
-		
-		
-		
-		
-		
+		FString crr = "";
+		for (FString x : stringState[I][j])
+		{
+			crr += (" > " + x);
+		}
+		crr.RemoveFromStart(" > ");
+		from->Text->SetText(FText::FromString(crr));
+
 		up(I, j, min(A, min(B, C)));
 		text_color(I, j, 2);
 		text_color(I - 1, j, 2);

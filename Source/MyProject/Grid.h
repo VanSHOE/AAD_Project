@@ -16,8 +16,7 @@ class MYPROJECT_API AGrid : public AActor
 	GENERATED_BODY()
 private:
 	double last = 0;
-	int I = 0;
-	int j = 0;
+
 	int cur = 1;
 	int mid = -1;
 	int mini = 0;
@@ -29,7 +28,10 @@ public:
 	FActorSpawnParameters SpawnParamenters;
 	AWord_3D* from;
 	AWord_3D* to;
-
+	UPROPERTY(VisibleAnywhere)
+		int I = 0;
+	UPROPERTY(VisibleAnywhere)
+		int j = 0;
 
 	UPROPERTY(EditAnywhere)
 		FString start;
