@@ -31,7 +31,7 @@ public:
 	UPROPERTY(VisibleAnywhere)
 		int I = 0;
 	UPROPERTY(VisibleAnywhere)
-		int j = 0;
+		int j = 0; 
 
 	UPROPERTY(EditAnywhere)
 		FString start;

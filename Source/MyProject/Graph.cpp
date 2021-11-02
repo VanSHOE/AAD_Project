@@ -15,7 +15,7 @@
 AGraph::AGraph()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	srand(time(0));
 }
 
@@ -37,10 +37,8 @@ void AGraph::BeginPlay()
 	ox = SpawnPosition.X;
 	oy = SpawnPosition.Y;
 	oz = SpawnPosition.Z;
-	pq.clear();
 	cur_bfs = 0;
 	Store.clear();
-	Edge_Store.clear();
 	if (nodes >= size_z * size_y * size_x)
 	{
 		nodes = size_z * size_y * size_x;
@@ -51,28 +49,12 @@ void AGraph::BeginPlay()
 	me.assign(fib_n + 1, false);
 	mem = false;
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
-	TArray<AActor*> a;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
+	//TArray<AActor*> a;
+	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
-	mat = Cast<AGrid>(a[0]);
-	pqmat = Cast<AGrid>(a[1]);
+	//mat = Cast<AGrid>(a[0]);
 	second.clear();
-	edges = 0;
-	bfc.reset();
-	bfo.clear();
-	bfo.assign(nodes, INT_MAX);	
-	bfknown.clear();
-	bfknown.assign(nodes, INT_MAX);
-	prev.clear();
-	for (int ii = 0; ii < nodes; ii++)
-	{
-		EdgeStorage q;
-		prev.push_back(q);
-	}
-	bfo[0] = 0;
-	bfknown[0] = 0;
-	inPath.clear();
-	curnode = nullptr;
+
 }
 
 // Called every frame
@@ -87,154 +69,176 @@ void AGraph::Tick(float DeltaTime)
 		return;
 	}
 	last = 0;
-	
+
 	if (cur_step == 0)
 	{
-		if (cnodes >= nodes)
-		{
-			i = k = 0;
-			j = 1;
-			cur_step++;
-			return;
-		}
-		if (k >= size_z)
-		{
-			k = 0;
-			j++;
-			SpawnPosition.Z = oz;
-			SpawnPosition.Y += DistanceBetweenNodes;
-		}
-		if (j >= size_y)
-		{
-			j = 0;
-			i++;
-			SpawnPosition.Y = oy;
-			SpawnPosition.X += DistanceBetweenNodes;
-		}
-		if (i >= size_x)
-		{
-			i = j = k = 0;
-			SpawnPosition.X = ox;
-			SpawnPosition.Y = oy;
-			SpawnPosition.Z = oz;
-			return;
-		}
 
-		if (grid3d[i][j][k] == nullptr)
+		groot = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+		auto sp = SpawnPosition;
+		sp.Z -= 400.f;
+		sp.Y -= 200.f;
+		sp.X -= 200.f * fib_n;
+		groot->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
+		groot->marray->size_x = groot->val.r = fib_n;
+
+		groot->marray->grid3d.assign(1, std::vector<AGrid_Cell*>(fib_n));
+		groot->marray->grid.assign(1, std::vector<int64>(fib_n, -1));
+		for (int ii = 0; ii < fib_n; ii++)
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("Spawning"));
-			//UE_LOG(LogTemp, Warning, TEXT("%d %d %d"), i, j, k);
-			if (rand() % ProbabilityIn1byX == 0)
-			{
-				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-				grid3d[i][j][k]->val = INT_MAX;
-				grid3d[i][j][k]->id = c_val;
-				grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(c_val++)));
-				grid3d[i][j][k]->my_i = i;
-				grid3d[i][j][k]->my_j = j;
-				grid3d[i][j][k]->my_k = k;
-				
-				cnodes++;
-				Store.push_back(grid3d[i][j][k]);
-			}
+			groot->marray->grid[0][ii] = rand() % (2 * fib_n) - fib_n + 1;
 		}
-		SpawnPosition.Z += DistanceBetweenNodes;
-		k++;
+		groot->marray->next = true;
+
+		groot->val.l = 0;
+		groot->SpawnPosition = SpawnPosition;
+		groot->Text->SetText(FText::FromString(c2s(0, fib_n)));
+		groot->ct = 2;
+		cur = groot;
+		cur_step = 3;
+
 	}
 	else if (cur_step == 1)
 	{
 
-		if (j >= nodes)
+		if (!next && !AUTO)
 		{
-			i++;
-			j = 0;
+			return;
 		}
-		if (i >= nodes - 1)
+		next = false;
+		if (cur->ct == 2)
 		{
-			i = j = 0;
-			cur_step = 2;
-			pq.insert({ 0, Store[0] });
-			Store[0]->val = 0;
-			/*
-			for (int ii = 0; ii < Edge_Store.size() / 2; ii++)
+			SpawnPosition = cur->SpawnPosition;
+			SpawnPosition.Y += DistanceBetweenNodes;
+			SpawnPosition.X -= (cur->val.r - cur->val.l + 1) * DistanceBetweenNodes;
+
+			cur->left = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+			cur->left->val.l = cur->val.l;
+			cur->left->val.r = ppt;
+
+			auto sp = SpawnPosition;
+			sp.Z -= 400.f;
+			sp.Y -= 200.f;
+			sp.X -= 200.f * (cur->left->val.r - cur->left->val.l);
+			cur->left->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
+			cur->left->marray->size_x = cur->left->val.r - cur->left->val.l;
+			cur->left->marray->grid3d.assign(1, std::vector<AGrid_Cell*>(cur->left->marray->size_x));
+			cur->left->marray->grid.assign(1, std::vector<int64>(cur->left->marray->size_x, -1));
+			for (int ii = 0; ii < cur->left->marray->size_x; ii++)
 			{
-				int swap2 = Edge_Store.size() - 1 - ii; //rand() % Edge_Store.size();
-				auto temp = Edge_Store[ii];
-				Edge_Store[ii] = Edge_Store[swap2];
-				Edge_Store[swap2] = temp;
+				cur->left->marray->grid[0][ii] = cur->marray->grid[0][ii];
 			}
-			*/
-			//second.push_back(Store[0]);
-			return;
-		}
-		if (i == j)
-		{
-			j++;
-			return;
-		}
-		AGraphNode::edge_to q;
-		//UE_LOG(LogTemp, Warning, TEXT("%d is store size, cnodes is %d we need %d and %d"), Store.size(), cnodes, i, j);
-		FVector Myloc = Store[i]->GetActorLocation();
-		Myloc.Z += 50;
-		FVector Tarloc = Store[j]->GetActorLocation();
-		Tarloc.Z += 50;
-		FVector dir = Tarloc - Myloc;
-		FRotator pointTo = dir.Rotation();
-		Myloc += (50.f * dir / dir.Size());
-		//UE_LOG(LogTemp, Warning, TEXT("Between %s and %s, vector is %s, rotator is %s"), *Store[i]->GetName(), *Store[j]->GetName(), *dir.ToString(), *pointTo.ToString());
+			cur->left->marray->next = true;
 
-		FHitResult* HitResult = new FHitResult();
-		FVector StartTrace = Myloc;
-		FVector EndTrace = Tarloc;
-		FVector ForwardVector = UKismetMathLibrary::GetDirectionUnitVector(StartTrace, EndTrace);
-		FCollisionQueryParams* TraceParams = new FCollisionQueryParams();
-		TraceParams->AddIgnoredActor(Store[i]);
-
-		if (GetWorld()->LineTraceSingleByChannel(*HitResult, StartTrace, EndTrace, ECC_Visibility, *TraceParams))
-		{
-			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("You hit: %s"), *HitResult->Actor->GetName()));
-			auto who = HitResult->GetActor();
-			if (who->IsA(AGraphNode::StaticClass()) && rand() % Ep == 0)
+			cur->left->SpawnPosition = SpawnPosition;
+			cur->left->Text->SetText(FText::FromString(c2s(cur->left->val.l, cur->left->val.r)));
+			cur->left->parent = cur;
+			if (cur->left->val.l + 2 >= cur->left->val.r)
 			{
-				AGraphNode* hit_node = Cast<AGraphNode>(who);
-				if (hit_node->my_i == Store[j]->my_i && hit_node->my_j == Store[j]->my_j && hit_node->my_k == Store[j]->my_k)
-				{
-					q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
-					auto hlocl = Tarloc;
-					hlocl -= (50.f + headsize) * ForwardVector;
-					//GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParamenters);
-					FVector scale = { 1, 1, dir.Size() - (100 + headsize) };
-					q.edge->SetActorScale3D(scale);
-					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
-					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
-					q.edge->Text->val = rand() % MaxWT;
-					q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
-				//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
-				//	q.edge->dp->val = INT_MAX;
-				//	q.edge->dp->Text->SetText(FText::FromString(TEXT("Inf")));
-			
-					q.i = Store[j]->my_i;
-					q.j = Store[j]->my_j;
-					q.k = Store[j]->my_k;
-					q.nbor = Store[j];
-					Store[i]->edges.push_back(q);
-				//	EdgeStorage qq;
-				//	qq.from = Store[i];
-				//	qq.to = Store[j];
-				//	qq.edge = q.edge;
-				//	Edge_Store.push_back(qq);
+				cur->left->ct = 0;
+			}
+			else
+				cur->left->ct = 2;
 
-					q.i = Store[i]->my_i;
-					q.j = Store[i]->my_j;
-					q.k = Store[i]->my_k;
-					q.nbor = Store[i];
-					Store[j]->edges.push_back(q);
-					edges++;
+			AGraphNode::edge_to q;
+			FVector Myloc = cur->GetActorLocation();
+			Myloc.Z += 50;
+			FVector Tarloc = cur->left->GetActorLocation();
+			Tarloc.Z += 50;
+			FVector dir = Tarloc - Myloc;
+			FRotator pointTo = dir.Rotation();
+			Myloc += (50.f * dir / dir.Size());
+			q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
+			FVector scale = { 1,1,dir.Size() - 100.f };
+			q.edge->SetActorScale3D(scale);
+			q.i = cur->left->my_i;
+			q.j = cur->left->my_j;
+			q.k = cur->left->my_k;
+			cur->edges.push_back(q);
+			cur = cur->left;
+			qm.reset();
+			
+			cur_step = 3;
+			return;
+		}
+		else if (cur->ct == 1)
+		{
+			SpawnPosition = cur->SpawnPosition;
+			SpawnPosition.Y += DistanceBetweenNodes;
+			SpawnPosition.X += (cur->val.r - cur->val.l) * DistanceBetweenNodes;
+			cur->right = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+			cur->right->val.l = ppt + 1;
+			cur->right->val.r = cur->val.r;
+
+			auto sp = SpawnPosition;
+			sp.Z -= 400.f;
+			sp.Y -= 200.f;
+			sp.X -= 200.f * (cur->right->val.r - cur->right->val.l);
+			cur->right->marray = GetWorld()->SpawnActor<AGrid>(GBP, sp, FRotator::ZeroRotator, SpawnParamenters);
+			cur->right->marray->size_x = cur->right->val.r - cur->right->val.l;
+			cur->right->marray->grid3d.assign(1, std::vector<AGrid_Cell*>(cur->right->marray->size_x));
+			cur->right->marray->grid.assign(1, std::vector<int64>(cur->right->marray->size_x, -1));
+			for (int ii = cur->right->marray->size_x - 1; ii >= 0; ii--)
+			{
+				cur->right->marray->grid[0][ii] = cur->marray->grid[0][cur->marray->size_x - 1 - (cur->right->marray->size_x - 1 - ii)];
+			}
+			cur->right->marray->next = true;
+
+			cur->right->SpawnPosition = SpawnPosition;
+			cur->right->Text->SetText(FText::FromString(c2s(cur->right->val.l, cur->right->val.r)));
+			cur->right->parent = cur;
+
+			if (cur->right->val.l + 2 >= cur->right->val.r)
+			{
+				cur->right->ct = 0;
+			}
+			else cur->right->ct = 2;
+
+			AGraphNode::edge_to q;
+			FVector Myloc = cur->GetActorLocation();
+			Myloc.Z += 50;
+			FVector Tarloc = cur->right->GetActorLocation();
+			Tarloc.Z += 50;
+			FVector dir = Tarloc - Myloc;
+			FRotator pointTo = dir.Rotation();
+			Myloc += (50.f * dir / dir.Size());
+			q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
+			FVector scale = { 1,1,dir.Size() - 100.f };
+			q.edge->SetActorScale3D(scale);
+			q.i = cur->right->my_i;
+			q.j = cur->right->my_j;
+			q.k = cur->right->my_k;
+			cur->edges.push_back(q);
+			cur = cur->right;
+			qm.reset();
+			cur_step = 3;
+			return;
+		}
+		else
+		{
+			if (cur->val.r - cur->val.l == 2)
+			{
+				if (cur->marray->grid[0][0] > cur->marray->grid[0][1])
+				{
+					int temp = cur->marray->grid[0][0];
+					cur->marray->grid[0][0] = cur->marray->grid[0][1];
+					cur->marray->grid[0][1] = temp;
+					cur->marray->next = true;
 				}
 			}
+			else if (cur->val.r - cur->val.l > 2)
+			{
+				cur_step = 2;
+				cur->marray->text_color(0, 0, 3);
+				cur->left->marray->text_color(0, 0, 3);
+				cur->right->marray->text_color(0, 0, 3);
+				qc.reset();
+				return;
+			}
+			cur = cur->parent;
+			cur->ct--;
+			return;
 		}
 
-		j++;
 	}
 	else if (cur_step == 2)
 	{
@@ -243,32 +247,39 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-
-		if (pq.size() == 0)
+		
+		if (qc.i >= cur->left->marray->size_x)
 		{
-			cur_step = -99;
+			qc.l = true;
+		}
+		if (qc.l && qc.i - cur->left->marray->size_x >= cur->left->marray->size_x)
+		{
+			qc.r = true;
+		}
+		if (qc.l == false)
+		{
+			cur->marray->grid[0][qc.j++] = cur->left->marray->grid[0][qc.i++];
+			cur->marray->next = true;
+		}
+		else if (qc.r == false)
+		{
+			cur->marray->grid[0][qc.j++] = cur->right->marray->grid[0][(qc.i++) - cur->left->marray->size_x];
+			cur->marray->next = true;
+		}
+		else
+		{
+			qc.reset();
+			if (cur == groot)
+			{
+				cur_step = -2;
+				return;
+			}
+
+			cur = cur->parent;
+			cur->ct--;
+			cur_step = 1;
 			return;
 		}
-
-		curnode = pq.begin()->second;
-		if (curnode->visited == true)
-		{
-			pq.erase(pq.begin());
-			curnode = nullptr;
-			return;
-		}
-		if (curnode->mstEdge)
-		{
-			edge_color(curnode->mstEdge, true, true);
-		}
-		node_color(curnode, 1);
-		mat->up(0, curnode->id, pq.begin()->first);
-		pq.erase(pq.begin());
-		setpq();
-		curnode->visited = true;
-		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *curnode->GetName());
-		cur_step++;
-		DCcounter = 0;
 	}
 	else if (cur_step == 3)
 	{
@@ -276,29 +287,25 @@ void AGraph::Tick(float DeltaTime)
 		{
 			return;
 		}
-
 		next = false;
-		if (DCcounter >= curnode->edges.size())
+		
+		if (qm.j >= cur->marray->size_x - 1)
 		{
-			DCcounter = 0;
-			cur_step--;
+			int64 temp = cur->marray->grid[0][qm.i + 1];
+			cur->marray->grid[0][qm.i + 1] = cur->marray->grid[0][cur->marray->size_x - 1];
+			cur->marray->grid[0][cur->marray->size_x - 1] = temp;
+			cur->marray->next = true;
+			ppt = qm.i + 1 + cur->val.l;
+			cur_step = 1;
 			return;
 		}
-		auto e = curnode->edges[DCcounter++];
-		if(e.edge->g == false)
-			edge_color(e.edge, false, true);
-		UE_LOG(LogTemp, Warning, TEXT("Adding %s on pq, from %s"), *e.nbor->GetName(), *curnode->GetName());
-		if (e.nbor->visited == false && (e.nbor->val == INT_MAX || e.edge->Text->val < e.nbor->val))
-		{
-			node_color(e.nbor, 0);
-			e.nbor->mstEdge = e.edge;
-			e.nbor->val = e.edge->Text->val;
-			e.edge->g = true;
-			pq.insert({ e.nbor->val, e.nbor });
-			setpq();
-		}
+
+
+
 	}
 }
+
+
 
 void AGraph::r_graph(bool& retflag)
 {
@@ -348,7 +355,7 @@ void AGraph::edge_color(AGraphEdge* n, bool green, bool shine)
 }
 FString AGraph::c2s(int32 l, int32 r)
 {
-	return "(" + FString::FromInt(l) + ", " + FString::FromInt(r) + ")";
+	return "[" + FString::FromInt(l) + ", " + FString::FromInt(r) + ")";
 }
 void AGraph::setpq()
 {

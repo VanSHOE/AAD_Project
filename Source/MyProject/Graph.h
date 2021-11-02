@@ -20,8 +20,8 @@ UCLASS()
 class MYPROJECT_API AGraph : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AGraph();
 	int64 min(int64 a, int64 b);
@@ -35,7 +35,7 @@ public:
 	UPROPERTY(EditAnywhere)
 		int64 nodes;
 
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		int64 mn = 5;
 	int64 fib_n = 5;
 
@@ -90,7 +90,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	std::deque< AGraphNode*> first;
 	std::deque< AGraphNode*> second;
@@ -116,6 +116,7 @@ private:
 	int ox, oy, oz;
 	int cnodes = 0;
 	double last = 0;
+	int ppt;
 	struct msrtflags
 	{
 		int i = 0;
@@ -144,7 +145,30 @@ private:
 			j = 0;
 		}
 	} bfc;
-
+	struct qsort_m
+	{
+		int i = 0;
+		int j = 0;
+		bool l = false;
+		bool r = false;
+		void reset()
+		{
+			i = 0;
+			j = 0;
+			l = false;
+			r = false;
+		}
+	} qc;
+	struct qsort_p
+	{
+		int i = -1;
+		int j = 0;
+		void reset()
+		{
+			i = -1;
+			j = 0;
+		}
+	} qm;
 	//UPROPERTY(VisibleAnywhere)
 		//bool NegativeCycle = false;
 	//UPROPERTY(VisibleAnywhere)

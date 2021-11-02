@@ -43,13 +43,6 @@ void AGrid::BeginPlay()
 	SpawnParamenters.Owner = this;
 	SpawnPosition = GetActorLocation();
 
-
-	TArray<AActor*> a;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWord_3D::StaticClass(), a);
-	from = Cast<AWord_3D>(a[0]);
-	from->Text->SetText(FText::FromString(start));
-	to = Cast<AWord_3D>(a[1]);
-	to->Text->SetText(FText::FromString(end));
 }
 
 // Called every frames
@@ -57,10 +50,26 @@ void AGrid::BeginPlay()
 void AGrid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	//UE_LOG(LogTemp, Warning, TEXT("%d %d"), p, q);
+	/*
+	last += DeltaTime;
+	if (last < delay)
+	{
+		return;
+	}
+	last = 0;
+	*/
+	// bool retflag;
+	// BubbleSort(retflag);
+	// Sel(retflag);
+	// SeqSearch(retflag);
+	// bsearch(retflag);
+	// Frac_K(retflag);
+	// if (retflag) return;
 	if (cur_step == -1)
 	{
-		cur_step++;
+		if(next)
+			cur_step++;
 	}
 	else if (cur_step == 0)
 	{
@@ -74,30 +83,8 @@ void AGrid::Tick(float DeltaTime)
 		if (I >= size_y)
 		{
 			cur_step++;
-			stringState[0][0].push_front("");
-			for (int ii = 0; ii < size_y; ii++)
-			{
-				up(ii, 0, ii);
-				if (ii)
-				{
-					stringState[ii][0] = stringState[ii - 1][0];
-					FString temp = stringState[ii][0][0];
-					stringState[ii][0].push_front(temp + start[ii - 1]);
-				}
-			}
-			for (int ii = 0; ii < size_x; ii++)
-			{
-				up(0, ii, ii);
-				if (ii)
-				{
-					stringState[0][ii] = stringState[0][ii - 1];
-					FString temp = stringState[0][ii - 1].back();
-					stringState[0][ii].push_back(temp + end[ii - 1]);
-				}
-			}
-
-			//next = true;
-			I = j = 1;
+			next = true;
+			I = j = 0;
 			return;
 		}
 		grid3d[I][j] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
@@ -109,7 +96,8 @@ void AGrid::Tick(float DeltaTime)
 		{
 			grid3d[I][j]->Wall_pY->ToggleVisibility();
 		}
-		grid3d[I][j]->Text->SetText(FText::FromString(TEXT("Inf")));
+
+		grid3d[I][j]->Text->SetText(FText::FromString(FString::FromInt(grid[I][j])));
 		j++;
 		SpawnPosition.X += 400;
 		p = 0;
@@ -117,92 +105,17 @@ void AGrid::Tick(float DeltaTime)
 	}
 	else if (cur_step == 1)
 	{
-		if (!next && !AUTO)
+		if (next || AUTO)
 		{
-			return;
-		}
-		next = false;
-
-		if (j >= size_x)
-		{
-			I++;
-			j = 1;
-			return;
-		}
-		if (I >= size_y)
-		{
-			cur_step = -2;
-			return;
-		}
-
-		text_color(I, j, 1);
-		text_color(I - 1, j, 3);
-		text_color(I, j - 1, 3);
-		text_color(I - 1, j - 1, 3);
-
-
-		cur_step++;
-	}
-	else if (cur_step == 2)
-	{
-		if (!next && !AUTO)
-		{
-			return;
-		}
-		next = false;
-
-		int64 A = grid[I - 1][j] + 1;
-		int64 B = grid[I][j - 1] + 1;
-		int64 C = grid[I - 1][j - 1] + diff(start[I - 1], end[j - 1]);
-
-		//UE_LOG(LogTemp, Error, TEXT("Test"));
-		
-		if (A <= B && A <= C)
-		{
-			stringState[I][j] = stringState[I - 1][j];
-			FString temp = stringState[I][j][0];
-			stringState[I][j].push_front(temp + start[I - 1]);
-		}
-		else if (B <= A && B <= C)
-		{
-			stringState[I][j] = stringState[I][j - 1];
-			FString temp = stringState[I][j].back();
-			stringState[I][j].push_back(temp + end[j - 1]);
-		}
-		else if (C <= A && C <= B)
-		{
-			stringState[I][j] = stringState[I - 1][j - 1];
-			
-			for (FString& x : stringState[I][j])
+			for (int i = 0; i < size_x; i++)
 			{
-				x += start[I - 1];
+				grid3d[0][i]->Text->SetText(FText::FromString(FString::FromInt(grid[0][i])));
 			}
-			if (diff(start[I - 1], end[j - 1]))
-			{
-				auto temp = stringState[I][j].back();
-				temp[temp.Len() - 1] = end[j - 1];
-				stringState[I][j].push_back(temp);
-			}
+			next = false;
 		}
-		else UE_LOG(LogTemp, Error, TEXT("SHOULD NOT HAPPEN"));
-		
-		FString crr = "";
-		for (FString x : stringState[I][j])
-		{
-			crr += (" > " + x);
-		}
-		crr.RemoveFromStart(" > ");
-		from->Text->SetText(FText::FromString(crr));
-
-		up(I, j, min(A, min(B, C)));
-		text_color(I, j, 2);
-		text_color(I - 1, j, 2);
-		text_color(I, j - 1, 2);
-		text_color(I - 1, j - 1, 2);
-		j++;
-		cur_step--;
 	}
 }
+
 
 void AGrid::up(int ii, int jj, int val)
 {
