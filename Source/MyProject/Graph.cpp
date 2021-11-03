@@ -94,8 +94,9 @@ void AGraph::Tick(float DeltaTime)
 		groot->Text->SetText(FText::FromString(c2s(0, fib_n)));
 		groot->ct = 2;
 		cur = groot;
-		cur_step = 3;
 
+		qm.reset();
+		cur_step = 3;
 	}
 	else if (cur_step == 1)
 	{
@@ -110,10 +111,18 @@ void AGraph::Tick(float DeltaTime)
 			SpawnPosition = cur->SpawnPosition;
 			SpawnPosition.Y += DistanceBetweenNodes;
 			SpawnPosition.X -= (cur->val.r - cur->val.l + 1) * DistanceBetweenNodes;
-
+			if (cur->ppt < cur->val.l)
+			{
+				UE_LOG(LogTemp, Error, TEXT("ppt less than l"));
+			}
+			else if (cur->ppt == cur->val.l)
+			{
+				cur->ct--;
+				return;
+			}
 			cur->left = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
 			cur->left->val.l = cur->val.l;
-			cur->left->val.r = ppt;
+			cur->left->val.r = cur->ppt;
 
 			auto sp = SpawnPosition;
 			sp.Z -= 400.f;
@@ -162,11 +171,16 @@ void AGraph::Tick(float DeltaTime)
 		}
 		else if (cur->ct == 1)
 		{
+			if (cur->ppt + 1 == cur->val.r)
+			{
+				cur->ct--;
+				return;
+			}
 			SpawnPosition = cur->SpawnPosition;
 			SpawnPosition.Y += DistanceBetweenNodes;
 			SpawnPosition.X += (cur->val.r - cur->val.l) * DistanceBetweenNodes;
 			cur->right = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
-			cur->right->val.l = ppt + 1;
+			cur->right->val.l = cur->ppt + 1;
 			cur->right->val.r = cur->val.r;
 
 			auto sp = SpawnPosition;
@@ -228,9 +242,9 @@ void AGraph::Tick(float DeltaTime)
 			else if (cur->val.r - cur->val.l > 2)
 			{
 				cur_step = 2;
-				cur->marray->text_color(0, 0, 3);
-				cur->left->marray->text_color(0, 0, 3);
-				cur->right->marray->text_color(0, 0, 3);
+			//	cur->marray->text_color(0, 0, 3);
+			//	cur->left->marray->text_color(0, 0, 3);
+			//	cur->right->marray->text_color(0, 0, 3);
 				qc.reset();
 				return;
 			}
@@ -247,14 +261,35 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-		
-		if (qc.i >= cur->left->marray->size_x)
+		if (qc.j == cur->ppt - cur->val.l)
+		{
+			qc.j++;
+		}
+		if (cur->left == nullptr || qc.i >= cur->left->marray->size_x)
 		{
 			qc.l = true;
 		}
-		if (qc.l && qc.i - cur->left->marray->size_x >= cur->left->marray->size_x)
+		if (cur->left != nullptr)
+		{	
+			if (cur->right == nullptr)
+			{
+				qc.r = true;
+			}
+			else if (qc.l && qc.i - cur->left->marray->size_x >= cur->right->marray->size_x)
+			{
+				qc.r = true;
+			}
+		}
+		else
 		{
-			qc.r = true;
+			if (cur->right == nullptr)
+			{
+				UE_LOG(LogTemp, Error, TEXT("Why is left and right both empty?"));
+			}
+			if (qc.i >= cur->right->marray->size_x)
+			{
+				qc.r = true;
+			}
 		}
 		if (qc.l == false)
 		{
@@ -263,7 +298,10 @@ void AGraph::Tick(float DeltaTime)
 		}
 		else if (qc.r == false)
 		{
-			cur->marray->grid[0][qc.j++] = cur->right->marray->grid[0][(qc.i++) - cur->left->marray->size_x];
+			if(cur->left != nullptr)
+				cur->marray->grid[0][qc.j++] = cur->right->marray->grid[0][(qc.i++) - cur->left->marray->size_x];
+			else
+				cur->marray->grid[0][qc.j++] = cur->right->marray->grid[0][qc.i++];
 			cur->marray->next = true;
 		}
 		else
@@ -295,13 +333,21 @@ void AGraph::Tick(float DeltaTime)
 			cur->marray->grid[0][qm.i + 1] = cur->marray->grid[0][cur->marray->size_x - 1];
 			cur->marray->grid[0][cur->marray->size_x - 1] = temp;
 			cur->marray->next = true;
-			ppt = qm.i + 1 + cur->val.l;
+			cur->ppt = qm.i + 1 + cur->val.l;
+		
 			cur_step = 1;
 			return;
 		}
 
-
-
+		if (cur->marray->grid[0][qm.j] <= cur->marray->grid[0][cur->marray->size_x - 1])
+		{
+			qm.i++;
+			int64 temp = cur->marray->grid[0][qm.i];
+			cur->marray->grid[0][qm.i] = cur->marray->grid[0][qm.j];
+			cur->marray->grid[0][qm.j] = temp;
+			cur->marray->next = true;
+		}
+		qm.j++;
 	}
 }
 

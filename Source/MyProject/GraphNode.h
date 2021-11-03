@@ -27,8 +27,8 @@ public:
 
 	struct msort
 	{
-		uint64 l;
-		uint64 r;
+		int64 l;
+		int64 r;
 	} val;
 
 	//int64 val;
@@ -51,7 +51,7 @@ public:
 	int id;
 	FVector SpawnPosition;
 	bool visited = false;
-
+	int64 ppt;
 	UPROPERTY(VisibleAnywhere)
 	int ct = 0;
 	//UPROPERTY(VisibleAnywhere)

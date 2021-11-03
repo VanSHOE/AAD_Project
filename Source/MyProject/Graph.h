@@ -26,28 +26,28 @@ public:
 	AGraph();
 	int64 min(int64 a, int64 b);
 
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int64 size_x;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int64 size_y;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int64 size_z;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int64 nodes;
 
 	UPROPERTY(EditAnywhere)
 		int64 mn = 5;
 	int64 fib_n = 5;
 
-	UPROPERTY(VisibleAnywhere)
+	//UPROPERTY(VisibleAnywhere)
 		uint64 edges = 0;
 	UPROPERTY(EditAnywhere)
 		int DistanceBetweenNodes = 400;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int ProbabilityIn1byX = 5;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int Ep = 5;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int MaxWT = 5;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGrid> GBP;
@@ -116,7 +116,7 @@ private:
 	int ox, oy, oz;
 	int cnodes = 0;
 	double last = 0;
-	int ppt;
+	//int ppt;
 	struct msrtflags
 	{
 		int i = 0;
