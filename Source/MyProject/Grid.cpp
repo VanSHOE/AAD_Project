@@ -73,6 +73,7 @@ void AGrid::Tick(float DeltaTime)
 	}
 	else if (cur_step == 0)
 	{
+		/*
 		if (j >= size_x)
 		{
 			j = 0;
@@ -100,8 +101,27 @@ void AGrid::Tick(float DeltaTime)
 		grid3d[I][j]->Text->SetText(FText::FromString(FString::FromInt(grid[I][j])));
 		j++;
 		SpawnPosition.X += 400;
+		*/
 		p = 0;
 		q = size_x - 1;
+
+		for (int ii = 0; ii < size_x; ii++)
+		{
+			grid3d[0][ii] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+			//grid[0][ii] = rand() % (size_x * size_y) + 1;
+			//grid3d[0][ii]->Text->SetText(FText::FromString(FString::FromInt(grid[0][j])));
+			if (ii == size_x - 1)
+			{
+				grid3d[0][ii]->Wall_pX->ToggleVisibility();
+			}
+			grid3d[0][ii]->Wall_pY->ToggleVisibility();
+			SpawnPosition.X += 400;
+		}
+		SpawnPosition.X = 0;
+		cur_step++;
+		next = true;
+
+
 	}
 	else if (cur_step == 1)
 	{
@@ -548,6 +568,7 @@ void AGrid::BubbleSort(bool& retflag)
 	}
 	else if (cur_step == 0)
 	{
+		/*
 		if (j >= size_x)
 		{
 			j = 0;
@@ -577,7 +598,21 @@ void AGrid::BubbleSort(bool& retflag)
 		}
 		j++;
 		SpawnPosition.X += 400;
-
+		*/
+		for (int ii = 0; ii < size_x; ii++)
+		{
+			grid3d[0][ii] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+			grid[0][ii] = rand() % (size_x * size_y) + 1;
+			grid3d[0][ii]->Text->SetText(FText::FromString(FString::FromInt(grid[0][j])));
+			if (ii == size_x - 1)
+			{
+				grid3d[0][ii]->Wall_pX->ToggleVisibility();
+			}
+			grid3d[0][ii]->Wall_pY->ToggleVisibility();
+			SpawnPosition.X += 400;
+		}
+		SpawnPosition.X = 0;
+		cur_step++;
 	}
 	else if (cur_step == 1)
 	{
@@ -625,7 +660,7 @@ void AGrid::BubbleSort(bool& retflag)
 }
 
 
-// 0: White, 1: Purple, 2: Green, 3: Blue
+/// 0: White, 1: Purple, 2: Green, 3: Blue
 void AGrid::text_color(int c, int r, int col)
 {
 	auto mat = grid3d[c][r]->Text->FrontMaterial->GetMaterial();

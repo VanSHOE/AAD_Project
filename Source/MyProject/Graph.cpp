@@ -261,8 +261,13 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
+		if(qc.j)
+			cur->marray->text_color(0, qc.j - 1, 2);
+		if(qc.j < cur->marray->size_x)
+			cur->marray->text_color(0, qc.j, 3);
 		if (qc.j == cur->ppt - cur->val.l)
 		{
+			cur->marray->text_color(0, qc.j, 2);
 			qc.j++;
 		}
 		if (cur->left == nullptr || qc.i >= cur->left->marray->size_x)
@@ -293,15 +298,23 @@ void AGraph::Tick(float DeltaTime)
 		}
 		if (qc.l == false)
 		{
+			cur->left->marray->text_color(0, qc.i, 3);
 			cur->marray->grid[0][qc.j++] = cur->left->marray->grid[0][qc.i++];
 			cur->marray->next = true;
 		}
 		else if (qc.r == false)
 		{
-			if(cur->left != nullptr)
+			
+			if (cur->left != nullptr)
+			{
+				cur->right->marray->text_color(0, qc.i - cur->left->marray->size_x, 3);
 				cur->marray->grid[0][qc.j++] = cur->right->marray->grid[0][(qc.i++) - cur->left->marray->size_x];
+			}
 			else
+			{
+				cur->right->marray->text_color(0, qc.i, 3);
 				cur->marray->grid[0][qc.j++] = cur->right->marray->grid[0][qc.i++];
+			}
 			cur->marray->next = true;
 		}
 		else
@@ -326,15 +339,21 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-		
+		cur->marray->text_color(0, cur->marray->size_x - 1, 3);
+		if(qm.j) 
+			cur->marray->text_color(0, qm.j - 1, 0);
+		cur->marray->text_color(0, qm.j, 1);
 		if (qm.j >= cur->marray->size_x - 1)
 		{
 			int64 temp = cur->marray->grid[0][qm.i + 1];
+			cur->marray->text_color(0, cur->marray->size_x - 1, 0);
+			if(qm.j)
+				cur->marray->text_color(0, qm.j - 1, 0);
 			cur->marray->grid[0][qm.i + 1] = cur->marray->grid[0][cur->marray->size_x - 1];
 			cur->marray->grid[0][cur->marray->size_x - 1] = temp;
 			cur->marray->next = true;
 			cur->ppt = qm.i + 1 + cur->val.l;
-		
+			cur->marray->text_color(0, qm.i + 1, 2);
 			cur_step = 1;
 			return;
 		}
