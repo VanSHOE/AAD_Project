@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "EWeight.h"
+#include "EdgeHead.h"
 #include "GraphEdge.generated.h"
 
 UCLASS()
@@ -19,6 +20,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GraphEdge")
 		class UStaticMeshComponent* Cylinder;
 	
+	AEdgeHead* head = nullptr;
 	AEWeight* Text = nullptr;
 	AEWeight* dp = nullptr;
 	bool g = false;

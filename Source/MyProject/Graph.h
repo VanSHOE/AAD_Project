@@ -26,16 +26,16 @@ public:
 	AGraph();
 	int64 min(int64 a, int64 b);
 
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		int64 size_x;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		int64 size_y;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		int64 size_z;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		int64 nodes;
 
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int64 mn = 5;
 	int64 fib_n = 5;
 
@@ -43,9 +43,9 @@ public:
 		uint64 edges = 0;
 	UPROPERTY(EditAnywhere)
 		int DistanceBetweenNodes = 400;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		int ProbabilityIn1byX = 5;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		int Ep = 5;
 	//UPROPERTY(EditAnywhere)
 		int MaxWT = 5;
@@ -64,6 +64,7 @@ public:
 	int64 k = 0;
 	std::vector<std::vector<std::vector<AGraphNode*>>> grid3d;
 	std::vector<AGraphNode*> Store;
+	std::vector<AGraphNode*> r_store;
 	struct EdgeStorage
 	{
 		AGraphEdge* edge = nullptr;
@@ -102,7 +103,7 @@ public:
 	void r_graph(bool& retflag);
 	FVector SpawnPosition;
 	FActorSpawnParameters SpawnParamenters;
-	void node_color(AGraphNode* n, bool green);
+	void node_color(AGraphNode* n, bool green, float opacity = 0.75f);
 	void edge_color(AGraphEdge* n, bool green = true, bool shine = true);
 	class AGrid* mat;
 	class AGrid* pqmat;
