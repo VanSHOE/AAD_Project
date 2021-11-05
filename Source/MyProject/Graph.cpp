@@ -26,6 +26,7 @@ AGraph::AGraph()
 void AGraph::BeginPlay()
 {
 	Super::BeginPlay();
+	secondDFS = false;
 	fib_n = mn;
 	groot = nullptr;
 	i = j = k = 0;
@@ -48,6 +49,7 @@ void AGraph::BeginPlay()
 	g_index = nodes - 1;
 	skip = false;
 	c_val = 0;
+	setCounter = 0;
 	me.assign(fib_n + 1, false);
 	mem = false;
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
@@ -55,8 +57,11 @@ void AGraph::BeginPlay()
 	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
 	//mat = Cast<AGrid>(a[0]);
+	first.clear();
 	second.clear();
-
+	fStack.clear();
+	SCCs.clear();
+	adjm.clear();
 }
 
 // Called every frame
@@ -214,7 +219,13 @@ void AGraph::Tick(float DeltaTime)
 		node_color(cur, 1);
 		//UE_LOG(LogTemp, Warning, TEXT("new G, %d"), first.size());
 		//if (!skip)
-			
+		if (secondDFS)
+		{	// TODO continue with adding nodes to the correct sets here
+			if (cur->visited == false)
+			{
+				SCCs[setCounter].push_back(cur);
+			}
+		}
 		skip = false;
 		cur->visited = true;
 
@@ -223,6 +234,7 @@ void AGraph::Tick(float DeltaTime)
 			UE_LOG(LogTemp, Warning, TEXT("All children over at: %s"), *cur->GetName());
 			skip = true;
 			first.pop_front();
+			fStack.push_front(cur);
 			node_color(cur, 0);
 			if (first.size() == 0)
 			{
@@ -249,24 +261,55 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-		bool found = false;
-		UE_LOG(LogTemp, Warning, TEXT("We are now searching"));
-		for (int ii = 0; ii < Store.size(); ii++)
+
+		if (!secondDFS)
 		{
-			if (Store[ii]->visited == false)
+			bool found = false;
+			UE_LOG(LogTemp, Warning, TEXT("Searching for a new DFS root"));
+
+			for (int ii = 0; ii < Store.size(); ii++)
 			{
-				cur = Store[ii];
-				node_color(cur, 1);
-				cur_step = 2;
-				return;
+				if (Store[ii]->visited == false)
+				{
+					cur = Store[ii];
+					node_color(cur, 1);
+					cur_step = 2;
+					return;
+				}
 			}
+			first.clear();
+			cur_step = 4;
 		}
-		first.clear();
-		cur_step = 4;
-	
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Searching for a new DFS root"));
+			bool found = false;
+
+			while (!found && fStack.size())
+			{
+				if (fStack[0]->visited == false)
+				{
+					setCounter++;
+					std::vector<AGraphNode*> qqq;
+					SCCs.push_back(qqq);
+					found = true;
+					cur = fStack[0];
+					node_color(cur, 1);
+					fStack.pop_front();
+					cur_step = 2;
+					return;
+				}
+				fStack.pop_front();
+			}
+			cur_step = 4;
+			return;
+			
+		}
 	}	
 	else if (cur_step == 4)
-	{
+	{	
+		
+		skip = false;
 		for (auto x : Store)
 		{
 			x->edges.clear();
@@ -302,9 +345,112 @@ void AGraph::Tick(float DeltaTime)
 			q.k = cur_rev.from->my_k;
 			q.nbor = cur_rev.from;
 			cur_rev.to->edges.push_back(q);
+			Edge_Store[ii].edge = q.edge;
+			Edge_Store[ii].from = cur_rev.to;
+			Edge_Store[ii].to = cur_rev.from;
+			if (secondDFS)
+			{
+				adjm[{Edge_Store[ii].from, Edge_Store[ii].to}] = q.edge;
+			}
 		}
-		cur = Store[0];
-		cur_step = 2;
+		if (secondDFS)
+		{
+			cur_step = 5;
+			itsc.reset();
+			return;
+
+			UE_LOG(LogTemp, Warning, TEXT("SCCs:"));
+			for (auto x : SCCs)
+			{
+				FString ans = "";
+				for (auto y : x)
+				{
+					ans = ans + ", " + y->GetName();
+					
+					std::pair<AGraphNode*, AGraphNode*> qqq;
+					qqq.first = y;
+					for (auto z : x)
+					{
+						qqq.second = z;
+						if (adjm.find(qqq) != adjm.end())
+						{
+							edge_color(adjm[qqq]);
+						}
+					}
+				}
+				
+			}
+			cur_step = -989;
+			return;
+		}
+		cur_step = 3;
+		setCounter = -1;
+		secondDFS = true;
+	}
+	else if (cur_step == 5)
+	{
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
+		if (itsc.k >= SCCs[itsc.i].size())
+		{
+			itsc.j++;
+			itsc.add_it = true;
+			itsc.k = 0;
+		}
+		if (itsc.j >= SCCs[itsc.i].size())
+		{
+			itsc.ans.RemoveFromStart(", ");
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *itsc.ans);
+			itsc.ans = "";
+			itsc.i++;
+			itsc.j = 0;
+			next = AUTO = false;
+			cur_step++;
+			return;
+		}
+		if (itsc.i >= SCCs.size())
+		{
+			cur_step = -989;
+			return;
+		}
+		AGraphNode* y = SCCs[itsc.i][itsc.j];
+		AGraphNode* z = SCCs[itsc.i][itsc.k];
+		if (itsc.add_it)
+		{
+			itsc.add_it = false;
+			itsc.ans = itsc.ans + ", " + y->GetName();
+			node_color(y, true);
+		}
+		std::pair<AGraphNode*, AGraphNode*> qqq;
+		qqq.first = y;
+		qqq.second = z;
+		if (adjm.find(qqq) != adjm.end())
+		{
+			edge_color(adjm[qqq], false);
+		}
+		itsc.k++;
+		next = true;
+	}
+	else if (cur_step == 6)
+	{
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
+		for (auto x : Edge_Store)
+		{
+			edge_color(x.edge, false, false);
+		}
+		for (auto x : Store)
+		{
+			node_color(x, false, 0.35f);
+		}
+		cur_step--;
+		next = true;
 	}
 }
 

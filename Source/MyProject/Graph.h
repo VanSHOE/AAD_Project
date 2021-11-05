@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include "EdgeHead.h"
 #include "GraphNode.h"
+#include <map>
 #include "EWeight.h"
 #include "Grid.h"
 #include "GameFramework/Actor.h"
@@ -77,7 +78,7 @@ public:
 		}
 	};
 	std::vector<EdgeStorage> Edge_Store;
-
+	std::map<std::pair<AGraphNode*, AGraphNode*>, AGraphEdge*> adjm;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool next = false;
@@ -94,6 +95,7 @@ protected:
 public:
 	// Called every frame
 	std::deque< AGraphNode*> first;
+	std::deque< AGraphNode*> fStack;
 	std::deque< AGraphNode*> second;
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool mem = false;
@@ -112,6 +114,8 @@ public:
 	FString c2s(int l, int r);
 	void setpq();
 private:
+	bool secondDFS = false;
+	int setCounter = 0;
 	int c_val = 0;
 	int g_index;
 	int ox, oy, oz;
@@ -131,6 +135,24 @@ private:
 			l = r = true;
 		}
 	} msi;
+
+	struct SCCit
+	{
+		FString ans = "";
+		int i = 0;
+		int j = 0;
+		int k = 0;
+		bool add_it = true;
+		void reset()
+		{
+			add_it = true;
+			ans = "";
+			i = 0;
+			j = 0;
+			k = 0;
+		}
+	} itsc;
+
 
 	AGraphNode* groot;
 	bool skip = false;
@@ -174,7 +196,7 @@ private:
 		//bool NegativeCycle = false;
 	//UPROPERTY(VisibleAnywhere)
 		//int MaxIt = 0;
-
+	std::vector<std::vector<AGraphNode*>> SCCs;
 	std::set <std::pair<int64, AGraphNode*>> pq; 
 	std::unordered_set<AGraphEdge*> inPath;
 	std::vector<int64> bfo;
