@@ -83,9 +83,10 @@ void AGraph::Tick(float DeltaTime)
 
 		groot->marray->grid3d.assign(1, std::vector<AGrid_Cell*>(fib_n));
 		groot->marray->grid.assign(1, std::vector<int64>(fib_n, -1));
-		for (int ii = 0; ii < fib_n; ii++)
+		groot->marray->grid[0][0] = rand() % (2 * fib_n) - fib_n + 1;
+		for (int ii = 1; ii < fib_n; ii++)
 		{
-			groot->marray->grid[0][ii] = rand() % (2 * fib_n) - fib_n + 1;
+			groot->marray->grid[0][ii] = groot->marray->grid[0][ii - 1] + rand() % fib_n + 1;
 		}
 		groot->marray->next = true;
 
@@ -261,13 +262,13 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-		if(qc.j)
+		if(qc.j && qc.j - 1 != cur->ppt - cur->val.l)
 			cur->marray->text_color(0, qc.j - 1, 2);
 		if(qc.j < cur->marray->size_x)
 			cur->marray->text_color(0, qc.j, 3);
 		if (qc.j == cur->ppt - cur->val.l)
 		{
-			cur->marray->text_color(0, qc.j, 2);
+			cur->marray->text_color(0, qc.j, 1);
 			qc.j++;
 		}
 		if (cur->left == nullptr || qc.i >= cur->left->marray->size_x)
@@ -298,7 +299,8 @@ void AGraph::Tick(float DeltaTime)
 		}
 		if (qc.l == false)
 		{
-			cur->left->marray->text_color(0, qc.i, 3);
+			if (qc.i != cur->left->ppt - cur->left->val.l)
+				cur->left->marray->text_color(0, qc.i, 3);
 			cur->marray->grid[0][qc.j++] = cur->left->marray->grid[0][qc.i++];
 			cur->marray->next = true;
 		}
@@ -307,12 +309,14 @@ void AGraph::Tick(float DeltaTime)
 			
 			if (cur->left != nullptr)
 			{
-				cur->right->marray->text_color(0, qc.i - cur->left->marray->size_x, 3);
+				if(qc.i - cur->left->marray->size_x != cur->right->ppt - cur->right->val.l)
+					cur->right->marray->text_color(0, qc.i - cur->left->marray->size_x, 3);
 				cur->marray->grid[0][qc.j++] = cur->right->marray->grid[0][(qc.i++) - cur->left->marray->size_x];
 			}
 			else
 			{
-				cur->right->marray->text_color(0, qc.i, 3);
+				if (qc.i != cur->right->ppt - cur->right->val.l)
+					cur->right->marray->text_color(0, qc.i, 3);
 				cur->marray->grid[0][qc.j++] = cur->right->marray->grid[0][qc.i++];
 			}
 			cur->marray->next = true;
@@ -340,14 +344,28 @@ void AGraph::Tick(float DeltaTime)
 		}
 		next = false;
 		cur->marray->text_color(0, cur->marray->size_x - 1, 3);
-		if(qm.j) 
+		if (qm.i + 1>= 0)
+			cur->marray->text_color(0, qm.i + 1, 3);
+		if(qm.j && qm.j - 1 != qm.i + 1)
 			cur->marray->text_color(0, qm.j - 1, 0);
+		if (qm.i + 1 > 0)
+			cur->marray->text_color(0, qm.i, 0);
 		cur->marray->text_color(0, qm.j, 1);
+		cur_step++;
+	}
+	else if (cur_step == 4)
+	{
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
+
 		if (qm.j >= cur->marray->size_x - 1)
 		{
 			int64 temp = cur->marray->grid[0][qm.i + 1];
 			cur->marray->text_color(0, cur->marray->size_x - 1, 0);
-			if(qm.j)
+			if (qm.j)
 				cur->marray->text_color(0, qm.j - 1, 0);
 			cur->marray->grid[0][qm.i + 1] = cur->marray->grid[0][cur->marray->size_x - 1];
 			cur->marray->grid[0][cur->marray->size_x - 1] = temp;
@@ -367,6 +385,7 @@ void AGraph::Tick(float DeltaTime)
 			cur->marray->next = true;
 		}
 		qm.j++;
+		cur_step--;
 	}
 }
 
