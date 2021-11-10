@@ -28,14 +28,14 @@ public:
 	FActorSpawnParameters SpawnParamenters;
 	AWord_3D* from;
 	AWord_3D* to;
-	UPROPERTY(VisibleAnywhere)
+//	UPROPERTY(VisibleAnywhere)
 		int I = 0;
-	UPROPERTY(VisibleAnywhere)
+//	UPROPERTY(VisibleAnywhere)
 		int j = 0; 
 
-	UPROPERTY(EditAnywhere)
+//	UPROPERTY(EditAnywhere)
 		FString start;
-	UPROPERTY(EditAnywhere)
+//	UPROPERTY(EditAnywhere)
 		FString end;
 
 	AGrid();
@@ -50,9 +50,9 @@ public:
 
 	//UPROPERTY(EditAnywhere)
 		int64 space_left = 500;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		int64 size_x = 100;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		int64 size_y = 100;
 	//UPROPERTY(VisibleAnywhere)
 		int64 total_value = 0;

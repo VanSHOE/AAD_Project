@@ -29,9 +29,9 @@ public:
 	{
 		int64 l;
 		int64 r;
-	} val;
+	} qval;
 
-	//int64 val;
+	int64 val;
 	AGraphEdge* mstEdge;
 	APawn* player = nullptr;
 	AGraphNode* parent = nullptr;

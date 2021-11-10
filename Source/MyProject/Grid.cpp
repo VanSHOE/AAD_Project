@@ -35,18 +35,15 @@ void AGrid::BeginPlay()
 	mini = 0;
 	ToSearch = -1;
 	//std::vector<std::vector<uint32>> grid(size_y, std::vector<uint32>(size_x, 0));
-	size_y = start.Len() + 1;
-	size_x = end.Len() + 1;
 	grid3d.assign(size_y, std::vector<AGrid_Cell*>(size_x, nullptr));
 	grid.assign(size_y, std::vector<int64>(size_x, INT_MAX));
-	stringState.assign(size_y, std::vector<std::deque<FString>>(size_x));
+
 	SpawnParamenters.Owner = this;
 	SpawnPosition = GetActorLocation();
 
 }
 
 // Called every frames
-
 void AGrid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -68,8 +65,7 @@ void AGrid::Tick(float DeltaTime)
 	// if (retflag) return;
 	if (cur_step == -1)
 	{
-		if(next)
-			cur_step++;
+		cur_step++;
 	}
 	else if (cur_step == 0)
 	{
@@ -84,7 +80,12 @@ void AGrid::Tick(float DeltaTime)
 		if (I >= size_y)
 		{
 			cur_step++;
-			next = true;
+			for (int ii = 0; ii < size_y; ii++)
+			{
+				grid[ii][0] = 0;
+				grid3d[ii][0]->Text->SetText(FText::FromString(TEXT("0")));
+			}
+			//next = true;
 			I = j = 0;
 			return;
 		}
@@ -97,14 +98,12 @@ void AGrid::Tick(float DeltaTime)
 		{
 			grid3d[I][j]->Wall_pY->ToggleVisibility();
 		}
-
-		grid3d[I][j]->Text->SetText(FText::FromString(FString::FromInt(grid[I][j])));
+		grid3d[I][j]->Text->SetText(FText::FromString(TEXT("Inf")));
 		j++;
 		SpawnPosition.X += 400;
 		*/
 		p = 0;
 		q = size_x - 1;
-
 		for (int ii = 0; ii < size_x; ii++)
 		{
 			grid3d[0][ii] = GetWorld()->SpawnActor<AGrid_Cell>(CellBP, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
@@ -120,16 +119,15 @@ void AGrid::Tick(float DeltaTime)
 		SpawnPosition.X = 0;
 		cur_step++;
 		next = true;
-
-
 	}
 	else if (cur_step == 1)
 	{
 		if (next || AUTO)
 		{
-			for (int i = 0; i < size_x; i++)
+			for (int ii = 0; ii < size_y; ii++)
 			{
-				grid3d[0][i]->Text->SetText(FText::FromString(FString::FromInt(grid[0][i])));
+				for (int jj = 0; jj < size_x; jj++)
+					up(ii, jj, grid[ii][jj]);
 			}
 			next = false;
 		}

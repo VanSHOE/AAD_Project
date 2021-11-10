@@ -53,22 +53,30 @@ void AGraph::BeginPlay()
 	me.assign(fib_n + 1, false);
 	mem = false;
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
-	//TArray<AActor*> a;
-	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
+	buckets.assign(nodes * MaxWT + 1, std::deque<AGraphNode*>());
+	TArray<AActor*> a;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
-	//mat = Cast<AGrid>(a[0]);
+	mat = Cast<AGrid>(a[0]);
+//	pqmat = Cast<AGrid>(a[1]);
 	first.clear();
 	second.clear();
 	fStack.clear();
 	SCCs.clear();
 	adjm.clear();
+	d_idx = 0;
 }
 
 // Called every frame
-
 void AGraph::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (last < delay)
+	{
+		last += DeltaTime;
+		return;
+	}
+	last = 0;
 
 	if (cur_step == 0)
 	{
@@ -109,13 +117,15 @@ void AGraph::Tick(float DeltaTime)
 			if (rand() % ProbabilityIn1byX == 0)
 			{
 				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+				grid3d[i][j][k]->val = INT_MAX;
+				grid3d[i][j][k]->id = c_val;
 				grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(c_val++)));
 				grid3d[i][j][k]->my_i = i;
 				grid3d[i][j][k]->my_j = j;
 				grid3d[i][j][k]->my_k = k;
+
 				cnodes++;
 				Store.push_back(grid3d[i][j][k]);
-				r_store.push_back(grid3d[i][j][k]);
 			}
 		}
 		SpawnPosition.Z += DistanceBetweenNodes;
@@ -133,10 +143,29 @@ void AGraph::Tick(float DeltaTime)
 		{
 			i = j = 0;
 			cur_step = 2;
-			cur = Store[0];
+			//pq.insert({ 0, Store[0] });
+			
+			buckets[0].push_front(Store[0]);
+
+
+			Store[0]->val = 0;
+			/*
+			for (int ii = 0; ii < Edge_Store.size() / 2; ii++)
+			{
+				int swap2 = Edge_Store.size() - 1 - ii; //rand() % Edge_Store.size();
+				auto temp = Edge_Store[ii];
+				Edge_Store[ii] = Edge_Store[swap2];
+				Edge_Store[swap2] = temp;
+			}
+			*/
+			//second.push_back(Store[0]);
 			return;
 		}
-
+		if (i == j)
+		{
+			j++;
+			return;
+		}
 		AGraphNode::edge_to q;
 		//UE_LOG(LogTemp, Warning, TEXT("%d is store size, cnodes is %d we need %d and %d"), Store.size(), cnodes, i, j);
 		FVector Myloc = Store[i]->GetActorLocation();
@@ -157,10 +186,8 @@ void AGraph::Tick(float DeltaTime)
 
 		if (GetWorld()->LineTraceSingleByChannel(*HitResult, StartTrace, EndTrace, ECC_Visibility, *TraceParams))
 		{
-
 			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("You hit: %s"), *HitResult->Actor->GetName()));
 			auto who = HitResult->GetActor();
-			bool make = false;
 			if (who->IsA(AGraphNode::StaticClass()) && rand() % Ep == 0)
 			{
 				AGraphNode* hit_node = Cast<AGraphNode>(who);
@@ -169,19 +196,34 @@ void AGraph::Tick(float DeltaTime)
 					q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
 					auto hlocl = Tarloc;
 					hlocl -= (50.f + headsize) * ForwardVector;
-					q.edge->head = GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParamenters);
-					FVector scale = { 1,1,dir.Size() - (100 + headsize)};
+					GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParamenters);
+					FVector scale = { 1, 1, dir.Size() - (100 + headsize) };
 					q.edge->SetActorScale3D(scale);
+					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
+					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
+					q.edge->Text->val = rand() % (MaxWT + 1);
+					q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
+					//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
+					//	q.edge->dp->val = INT_MAX;
+					//	q.edge->dp->Text->SetText(FText::FromString(TEXT("Inf")));
+
 					q.i = Store[j]->my_i;
 					q.j = Store[j]->my_j;
 					q.k = Store[j]->my_k;
 					q.nbor = Store[j];
 					Store[i]->edges.push_back(q);
 					EdgeStorage qq;
-					qq.edge = q.edge;
 					qq.from = Store[i];
 					qq.to = Store[j];
+					qq.edge = q.edge;
 					Edge_Store.push_back(qq);
+
+					edges++;
+					//q.i = Store[i]->my_i;
+					//q.j = Store[i]->my_j;
+					//q.k = Store[i]->my_k;
+					//q.nbor = Store[i];
+					//Store[j]->edges.push_back(q);
 				}
 			}
 		}
@@ -195,64 +237,33 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-		//UE_LOG(LogTemp, Warning, TEXT("G, %d"), first.size());
-		//
-		UE_LOG(LogTemp, Warning, TEXT("At: %s"), *cur->GetName());
-		
-		
-		if (!skip)
-			first.push_front(cur);
-		if (cur->visited && !skip)
+
+		if (d_idx >= mat->size_x)
 		{
-			next = skip = true;
-			UE_LOG(LogTemp, Warning, TEXT("Already visited: %s, now returning."), *cur->GetName());
-			first.pop_front();
-			//node_color(cur, 0);
-			if (first.size() == 0)
-			{
-				cur_step = -999;
-				return;
-			}
-			cur = first[0];
+			UE_LOG(LogTemp, Warning, TEXT("Buckets over"));
+		//	setpq();
+			cur_step = -99;
 			return;
 		}
-		node_color(cur, 1);
-		//UE_LOG(LogTemp, Warning, TEXT("new G, %d"), first.size());
-		//if (!skip)
-		if (secondDFS)
-		{	// TODO continue with adding nodes to the correct sets here
-			if (cur->visited == false)
-			{
-				SCCs[setCounter].push_back(cur);
-			}
-		}
-		skip = false;
-		cur->visited = true;
 
-		if (cur->ct >= cur->edges.size())
+		curnode = bucket_min();
+		if (curnode->visited == true)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("All children over at: %s"), *cur->GetName());
-			skip = true;
-			first.pop_front();
-			fStack.push_front(cur);
-			node_color(cur, 0);
-			if (first.size() == 0)
-			{
-				skip = false;
-				cur_step = 3;
-				return;
-			}
-			cur = first[0];
+			//pq.erase(pq.begin());
+			berase(curnode, d_idx);
+			curnode = nullptr;
 			return;
 		}
+		node_color(curnode, 1);
+		mat->up(0, curnode->id, d_idx);
+		//pq.erase(pq.begin());
+		//setpq();
+		berase(curnode, d_idx);
 		
-		cur = cur->edges[cur->ct++].nbor;
-		if (cur->visited)
-		{
-			next = true;
-		}
-		UE_LOG(LogTemp, Warning, TEXT("Going to: %s"), *cur->GetName());
-
+		curnode->visited = true;
+		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *curnode->GetName());
+		cur_step++;
+		DCcounter = 0;
 	}
 	else if (cur_step == 3)
 	{
@@ -261,199 +272,29 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-
-		if (!secondDFS)
+		if (DCcounter >= curnode->edges.size())
 		{
-			bool found = false;
-			UE_LOG(LogTemp, Warning, TEXT("Searching for a new DFS root"));
-
-			for (int ii = 0; ii < Store.size(); ii++)
-			{
-				if (Store[ii]->visited == false)
-				{
-					cur = Store[ii];
-					node_color(cur, 1);
-					cur_step = 2;
-					return;
-				}
-			}
-			first.clear();
-			cur_step = 4;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Searching for a new DFS root"));
-			bool found = false;
-
-			while (!found && fStack.size())
-			{
-				if (fStack[0]->visited == false)
-				{
-					setCounter++;
-					std::vector<AGraphNode*> qqq;
-					SCCs.push_back(qqq);
-					found = true;
-					cur = fStack[0];
-					node_color(cur, 1);
-					fStack.pop_front();
-					cur_step = 2;
-					return;
-				}
-				fStack.pop_front();
-			}
-			cur_step = 4;
+			DCcounter = 0;
+			cur_step--;
 			return;
-			
 		}
-	}	
-	else if (cur_step == 4)
-	{	
+		auto e = curnode->edges[DCcounter++];
+		edge_color(e.edge, false, true);
 		
-		skip = false;
-		for (auto x : Store)
+		if (e.nbor->visited == false && (e.nbor->val == INT_MAX || curnode->val + e.edge->Text->val < e.nbor->val))
 		{
-			x->edges.clear();
-			x->visited = false;
-			x->ct = 0;
-			node_color(x, false, 0.35f);
-		}
-		for (int ii = 0; ii < Edge_Store.size(); ii++)
-		{
-			EdgeStorage cur_rev = Edge_Store[ii];
-			cur_rev.edge->head->Destroy();
-			cur_rev.edge->Destroy();
-			
-			AGraphNode::edge_to q;
-			//UE_LOG(LogTemp, Warning, TEXT("%d is store size, cnodes is %d we need %d and %d"), Store.size(), cnodes, i, j);
-			FVector Myloc = cur_rev.to->GetActorLocation();
-			Myloc.Z += 50;
-			FVector Tarloc = cur_rev.from->GetActorLocation();
-			Tarloc.Z += 50;
-			FVector dir = Tarloc - Myloc;
-			FRotator pointTo = dir.Rotation();
-			Myloc += (50.f * dir / dir.Size());
-			//UE_LOG(LogTemp, Warning, TEXT("Between %s and %s, vector is %s, rotator is %s"), *Store[i]->GetName(), *Store[j]->GetName(), *dir.ToString(), *pointTo.ToString());
-			FVector ForwardVector = UKismetMathLibrary::GetDirectionUnitVector(Myloc, Tarloc);
-			q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
-			auto hlocl = Tarloc;
-			hlocl -= (50.f + headsize) * ForwardVector;
-			q.edge->head = GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParamenters);
-			FVector scale = { 1,1,dir.Size() - (100 + headsize) };
-			q.edge->SetActorScale3D(scale);
-			q.i = cur_rev.from->my_i;
-			q.j = cur_rev.from->my_j;
-			q.k = cur_rev.from->my_k;
-			q.nbor = cur_rev.from;
-			cur_rev.to->edges.push_back(q);
-			Edge_Store[ii].edge = q.edge;
-			Edge_Store[ii].from = cur_rev.to;
-			Edge_Store[ii].to = cur_rev.from;
-			if (secondDFS)
-			{
-				adjm[{Edge_Store[ii].from, Edge_Store[ii].to}] = q.edge;
-			}
-		}
-		if (secondDFS)
-		{
-			cur_step = 5;
-			itsc.reset();
-			return;
+			UE_LOG(LogTemp, Warning, TEXT("Adding %s on pq, from %s"), *e.nbor->GetName(), *curnode->GetName());
+			if(e.nbor->val != INT_MAX)
+				berase(e.nbor, e.nbor->val);
+			e.nbor->val = curnode->val + e.edge->Text->val;
+			//pq.insert({ e.nbor->val, e.nbor });
+			//if(!AUTO)
+			//setpq();
+			buckets[e.nbor->val].push_front(e.nbor);
 
-			UE_LOG(LogTemp, Warning, TEXT("SCCs:"));
-			for (auto x : SCCs)
-			{
-				FString ans = "";
-				for (auto y : x)
-				{
-					ans = ans + ", " + y->GetName();
-					
-					std::pair<AGraphNode*, AGraphNode*> qqq;
-					qqq.first = y;
-					for (auto z : x)
-					{
-						qqq.second = z;
-						if (adjm.find(qqq) != adjm.end())
-						{
-							edge_color(adjm[qqq]);
-						}
-					}
-				}
-				
-			}
-			cur_step = -989;
-			return;
 		}
-		cur_step = 3;
-		setCounter = -1;
-		secondDFS = true;
-	}
-	else if (cur_step == 5)
-	{
-		if (!next && !AUTO)
-		{
-			return;
-		}
-		next = false;
-		if (itsc.k >= SCCs[itsc.i].size())
-		{
-			itsc.j++;
-			itsc.add_it = true;
-			itsc.k = 0;
-		}
-		if (itsc.j >= SCCs[itsc.i].size())
-		{
-			itsc.ans.RemoveFromStart(", ");
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *itsc.ans);
-			itsc.ans = "";
-			itsc.i++;
-			itsc.j = 0;
-			next = AUTO = false;
-			cur_step++;
-			return;
-		}
-		if (itsc.i >= SCCs.size())
-		{
-			cur_step = -989;
-			return;
-		}
-		AGraphNode* y = SCCs[itsc.i][itsc.j];
-		AGraphNode* z = SCCs[itsc.i][itsc.k];
-		if (itsc.add_it)
-		{
-			itsc.add_it = false;
-			itsc.ans = itsc.ans + ", " + y->GetName();
-			node_color(y, true);
-		}
-		std::pair<AGraphNode*, AGraphNode*> qqq;
-		qqq.first = y;
-		qqq.second = z;
-		if (adjm.find(qqq) != adjm.end())
-		{
-			edge_color(adjm[qqq], false);
-		}
-		itsc.k++;
-		next = true;
-	}
-	else if (cur_step == 6)
-	{
-		if (!next && !AUTO)
-		{
-			return;
-		}
-		next = false;
-		for (auto x : Edge_Store)
-		{
-			edge_color(x.edge, false, false);
-		}
-		for (auto x : Store)
-		{
-			node_color(x, false, 0.35f);
-		}
-		cur_step--;
-		next = true;
 	}
 }
-
 
 void AGraph::r_graph(bool& retflag)
 {
@@ -501,6 +342,7 @@ FString AGraph::c2s(int32 l, int32 r)
 {
 	return "[" + FString::FromInt(l) + ", " + FString::FromInt(r) + ")";
 }
+/*
 void AGraph::setpq()
 {
 	int ii = 0;
@@ -516,4 +358,33 @@ void AGraph::setpq()
 		ii++;
 	}
 
+}
+*/
+
+AGraphNode* AGraph::bucket_min()
+{
+	while (d_idx < buckets.size() && buckets[d_idx].empty())
+		d_idx++;
+
+	if (d_idx >= mat->size_x)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Buckets over"));
+		//	setpq();
+		cur_step = -99;
+		return nullptr;
+	}
+	
+	return buckets[d_idx].back();
+}
+
+void AGraph::berase(AGraphNode* to_delete, int bucket_index)
+{
+	for (auto it = buckets[bucket_index].begin(); it != buckets[bucket_index].end(); it++)
+	{
+		if (*it == to_delete)
+		{
+			buckets[bucket_index].erase(it);
+			return;
+		}
+	}
 }

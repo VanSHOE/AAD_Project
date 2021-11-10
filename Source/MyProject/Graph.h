@@ -48,7 +48,7 @@ public:
 		int ProbabilityIn1byX = 5;
 	UPROPERTY(EditAnywhere)
 		int Ep = 5;
-	//UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		int MaxWT = 5;
 	UPROPERTY(EditDefaultsOnly, Category = "ActorSpawning")
 		TSubclassOf<AGrid> GBP;
@@ -108,12 +108,14 @@ public:
 	void node_color(AGraphNode* n, bool green, float opacity = 0.75f);
 	void edge_color(AGraphEdge* n, bool green = true, bool shine = true);
 	class AGrid* mat;
-	class AGrid* pqmat;
+//	class AGrid* pqmat;
 	UPROPERTY(EditAnywhere)
 		double delay = 0.01f;
 	FString c2s(int l, int r);
 	void setpq();
+
 private:
+	int d_idx = 0;
 	bool secondDFS = false;
 	int setCounter = 0;
 	int c_val = 0;
@@ -152,11 +154,12 @@ private:
 			k = 0;
 		}
 	} itsc;
-
-
+	AGraphNode* bucket_min();
+	std::vector<std::deque<AGraphNode*>> buckets;
 	AGraphNode* groot;
 	bool skip = false;
 	int cur_bfs = 0;
+	void berase(AGraphNode* to_delete, int bucket_index);
 	AGraphNode* cur;
 	struct bford
 	{
@@ -197,11 +200,12 @@ private:
 	//UPROPERTY(VisibleAnywhere)
 		//int MaxIt = 0;
 	std::vector<std::vector<AGraphNode*>> SCCs;
-	std::set <std::pair<int64, AGraphNode*>> pq; 
+	//std::set <std::pair<int64, AGraphNode*>> pq; 
 	std::unordered_set<AGraphEdge*> inPath;
 	std::vector<int64> bfo;
 	std::vector<int64> bfknown;
 	std::vector<EdgeStorage> prev;
 	AGraphNode* curnode = nullptr;
 	int DCcounter = 0;
+
 };
