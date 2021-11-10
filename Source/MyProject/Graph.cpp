@@ -247,9 +247,12 @@ void AGraph::Tick(float DeltaTime)
 		}
 
 		curnode = bucket_min();
+		if (curnode == nullptr) return;
 		if (curnode->visited == true)
 		{
 			//pq.erase(pq.begin());
+			UE_LOG(LogTemp, Warning, TEXT("Visited already"));
+			print_buckets();
 			berase(curnode, d_idx);
 			curnode = nullptr;
 			return;
@@ -259,9 +262,9 @@ void AGraph::Tick(float DeltaTime)
 		//pq.erase(pq.begin());
 		//setpq();
 		berase(curnode, d_idx);
-		
 		curnode->visited = true;
 		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *curnode->GetName());
+		print_buckets();
 		cur_step++;
 		DCcounter = 0;
 	}
@@ -291,7 +294,7 @@ void AGraph::Tick(float DeltaTime)
 			//if(!AUTO)
 			//setpq();
 			buckets[e.nbor->val].push_front(e.nbor);
-
+			print_buckets();
 		}
 	}
 }
@@ -386,5 +389,21 @@ void AGraph::berase(AGraphNode* to_delete, int bucket_index)
 			buckets[bucket_index].erase(it);
 			return;
 		}
+	}
+}
+
+void AGraph::print_buckets()
+{
+	for (int ii = 0; ii < buckets.size(); ii++)
+	{
+		FString tp = FString::FromInt(ii) + ":";
+		bool ran = false;
+		for (auto qq : buckets[ii])
+		{
+			ran = true;
+			tp = tp + " " + qq->GetName();
+		}
+		if(ran)
+			UE_LOG(LogTemp, Log, TEXT("%s"), *tp);
 	}
 }

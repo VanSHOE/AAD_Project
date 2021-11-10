@@ -138,7 +138,10 @@ void AGrid::Tick(float DeltaTime)
 void AGrid::up(int ii, int jj, int val)
 {
 	grid[ii][jj] = val;
-	grid3d[ii][jj]->Text->SetText(FText::FromString(FString::FromInt(grid[ii][jj])));
+	if(val != INT_MAX)
+		grid3d[ii][jj]->Text->SetText(FText::FromString(FString::FromInt(grid[ii][jj])));
+	else
+		grid3d[ii][jj]->Text->SetText(FText::FromString("Inf"));
 }
 
 void AGrid::Frac_K(bool& retflag)

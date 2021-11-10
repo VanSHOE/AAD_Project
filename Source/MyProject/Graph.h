@@ -208,4 +208,6 @@ private:
 	AGraphNode* curnode = nullptr;
 	int DCcounter = 0;
 
+	void print_buckets();
+
 };
