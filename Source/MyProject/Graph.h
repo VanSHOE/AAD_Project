@@ -104,11 +104,11 @@ public:
 	void Fib_dp(bool& retflag);
 	void r_graph(bool& retflag);
 	FVector SpawnPosition;
-	FActorSpawnParameters SpawnParamenters;
+	FActorSpawnParameters SpawnParameters;
 	void node_color(AGraphNode* n, bool green, float opacity = 0.75f);
 	void edge_color(AGraphEdge* n, bool green = true, bool shine = true);
-	class AGrid* mat;
-//	class AGrid* pqmat;
+	AGrid* mat;
+	AGrid* b_mat;
 	UPROPERTY(EditAnywhere)
 		double delay = 0.01f;
 	FString c2s(int l, int r);
@@ -156,6 +156,7 @@ private:
 	} itsc;
 	AGraphNode* bucket_min();
 	std::vector<std::deque<AGraphNode*>> buckets;
+	std::vector<AGrid*> bucket3d;
 	AGraphNode* groot;
 	bool skip = false;
 	int cur_bfs = 0;
@@ -209,5 +210,6 @@ private:
 	int DCcounter = 0;
 
 	void print_buckets();
+	void update_buckets(int index);
 
 };

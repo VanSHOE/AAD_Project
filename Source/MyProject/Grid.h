@@ -25,7 +25,7 @@ public:
 
 
 	FVector SpawnPosition;
-	FActorSpawnParameters SpawnParamenters;
+	FActorSpawnParameters SpawnParameters;
 	AWord_3D* from;
 	AWord_3D* to;
 //	UPROPERTY(VisibleAnywhere)
@@ -73,6 +73,8 @@ public:
 	void Sel(bool& retflag);
 
 	void up(int ii, int jj, int val);
+
+	void setSize();
 
 	int64 min(int64 a, int64 b);
 	bool diff(TCHAR a, TCHAR b);

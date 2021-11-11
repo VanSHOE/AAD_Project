@@ -33,7 +33,7 @@ void AGraph::BeginPlay()
 	cur_step = 0;
 	cnodes = 0;
 	last = 0;
-	SpawnParamenters.Owner = this;
+	SpawnParameters.Owner = this;
 	SpawnPosition = GetActorLocation();
 	ox = SpawnPosition.X;
 	oy = SpawnPosition.Y;
@@ -54,11 +54,35 @@ void AGraph::BeginPlay()
 	mem = false;
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
 	buckets.assign(nodes * MaxWT + 1, std::deque<AGraphNode*>());
+	bucket3d.assign(nodes * MaxWT + 1, nullptr);
+
+
+
 	TArray<AActor*> a;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
 	mat = Cast<AGrid>(a[0]);
-//	pqmat = Cast<AGrid>(a[1]);
+	b_mat = Cast<AGrid>(a[1]);
+
+	b_mat->size_x = (MaxWT * nodes + 1);
+	b_mat->size_y = 1;
+	b_mat->setSize();
+	for (int ii = 0; ii < b_mat->size_x; ii++)
+	{
+		b_mat->grid[0][ii] = ii;
+	}
+	b_mat->next = true;
+
+	mat->size_x = nodes;
+	mat->size_y = 1;
+	mat->setSize();
+	for (int ii = 0; ii < mat->size_x; ii++)
+	{
+		mat->grid[0][ii] = ii;
+	}
+	mat->next = true;
+
+
 	first.clear();
 	second.clear();
 	fStack.clear();
@@ -116,7 +140,7 @@ void AGraph::Tick(float DeltaTime)
 			//UE_LOG(LogTemp, Warning, TEXT("%d %d %d"), i, j, k);
 			if (rand() % ProbabilityIn1byX == 0)
 			{
-				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParamenters);
+				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParameters);
 				grid3d[i][j][k]->val = INT_MAX;
 				grid3d[i][j][k]->id = c_val;
 				grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(c_val++)));
@@ -144,11 +168,11 @@ void AGraph::Tick(float DeltaTime)
 			i = j = 0;
 			cur_step = 2;
 			//pq.insert({ 0, Store[0] });
-			
+
 			buckets[0].push_front(Store[0]);
-
-
 			Store[0]->val = 0;
+			print_buckets();
+			update_buckets(d_idx);
 			/*
 			for (int ii = 0; ii < Edge_Store.size() / 2; ii++)
 			{
@@ -193,14 +217,14 @@ void AGraph::Tick(float DeltaTime)
 				AGraphNode* hit_node = Cast<AGraphNode>(who);
 				if (hit_node->my_i == Store[j]->my_i && hit_node->my_j == Store[j]->my_j && hit_node->my_k == Store[j]->my_k)
 				{
-					q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParamenters);
+					q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParameters);
 					auto hlocl = Tarloc;
 					hlocl -= (50.f + headsize) * ForwardVector;
-					GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParamenters);
+					GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParameters);
 					FVector scale = { 1, 1, dir.Size() - (100 + headsize) };
 					q.edge->SetActorScale3D(scale);
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
-					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
+					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParameters);
 					q.edge->Text->val = rand() % (MaxWT + 1);
 					q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
 					//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
@@ -253,6 +277,7 @@ void AGraph::Tick(float DeltaTime)
 			//pq.erase(pq.begin());
 			UE_LOG(LogTemp, Warning, TEXT("Visited already"));
 			print_buckets();
+			update_buckets(d_idx);
 			berase(curnode, d_idx);
 			curnode = nullptr;
 			return;
@@ -265,6 +290,7 @@ void AGraph::Tick(float DeltaTime)
 		curnode->visited = true;
 		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *curnode->GetName());
 		print_buckets();
+		update_buckets(d_idx);
 		cur_step++;
 		DCcounter = 0;
 	}
@@ -287,24 +313,20 @@ void AGraph::Tick(float DeltaTime)
 		if (e.nbor->visited == false && (e.nbor->val == INT_MAX || curnode->val + e.edge->Text->val < e.nbor->val))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Adding %s on pq, from %s"), *e.nbor->GetName(), *curnode->GetName());
-			if(e.nbor->val != INT_MAX)
+			if (e.nbor->val != INT_MAX)
+			{
 				berase(e.nbor, e.nbor->val);
+				update_buckets(e.nbor->val);
+			}
 			e.nbor->val = curnode->val + e.edge->Text->val;
 			//pq.insert({ e.nbor->val, e.nbor });
 			//if(!AUTO)
 			//setpq();
 			buckets[e.nbor->val].push_front(e.nbor);
 			print_buckets();
+			update_buckets(e.nbor->val);
 		}
 	}
-}
-
-void AGraph::r_graph(bool& retflag)
-{
-	retflag = true;
-
-
-	retflag = false;
 }
 
 int64 AGraph::min(int64 a, int64 b)
@@ -406,4 +428,28 @@ void AGraph::print_buckets()
 		if(ran)
 			UE_LOG(LogTemp, Log, TEXT("%s"), *tp);
 	}
+}
+void AGraph::update_buckets(int index)
+{
+	if (bucket3d[index] != nullptr)
+	{
+		for (int ii = 0; ii < bucket3d[index]->size_y; ii++)
+		{
+			bucket3d[index]->grid3d[ii][0]->Destroy();
+		}
+		bucket3d[index]->Destroy();
+	}
+	FVector pos = b_mat->GetActorLocation();
+	pos.Y += 400.f;
+	pos.X += 400.f * index;
+	bucket3d[index] = GetWorld()->SpawnActor<AGrid>(GBP, pos, FRotator::ZeroRotator, SpawnParameters);
+	bucket3d[index]->size_x = 1;
+	bucket3d[index]->size_y = buckets[index].size();
+	bucket3d[index]->setSize();
+
+	for (int ii = 0; ii < bucket3d[index]->size_y; ii++)
+	{
+		bucket3d[index]->grid[ii][0] = buckets[index][ii]->id;
+	}
+	bucket3d[index]->next = true;
 }
