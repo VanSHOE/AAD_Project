@@ -95,5 +95,6 @@ public:
 	UPROPERTY(VisibleAnywhere)
 		int cur_step = 0;
 	//UPROPERTY(EditAnywhere)
-		int ToSearch = -1;
+	int ToSearch = -1;
+
 };

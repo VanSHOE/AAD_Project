@@ -54,9 +54,7 @@ void AGraph::BeginPlay()
 	mem = false;
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
 	buckets.assign(nodes * MaxWT + 1, std::deque<AGraphNode*>());
-	bucket3d.assign(nodes * MaxWT + 1, nullptr);
-
-
+	bucket3d.assign(optimized ? MaxWT + 1 : (MaxWT * nodes + 1) , nullptr);
 
 	TArray<AActor*> a;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
@@ -64,7 +62,7 @@ void AGraph::BeginPlay()
 	mat = Cast<AGrid>(a[0]);
 	b_mat = Cast<AGrid>(a[1]);
 
-	b_mat->size_x = (MaxWT * nodes + 1);
+	b_mat->size_x = optimized ? MaxWT + 1 : (MaxWT * nodes + 1);
 	b_mat->size_y = 1;
 	b_mat->setSize();
 	for (int ii = 0; ii < b_mat->size_x; ii++)
@@ -78,7 +76,7 @@ void AGraph::BeginPlay()
 	mat->setSize();
 	for (int ii = 0; ii < mat->size_x; ii++)
 	{
-		mat->grid[0][ii] = ii;
+		mat->grid[0][ii] = INT_MAX;
 	}
 	mat->next = true;
 
@@ -431,6 +429,33 @@ void AGraph::print_buckets()
 }
 void AGraph::update_buckets(int index)
 {
+	if (!optimized)
+	{
+		if (bucket3d[index] != nullptr)
+		{
+			for (int ii = 0; ii < bucket3d[index]->size_y; ii++)
+			{
+				bucket3d[index]->grid3d[ii][0]->Destroy();
+			}
+			bucket3d[index]->Destroy();
+		}
+		FVector pos = b_mat->GetActorLocation();
+		pos.Y += 400.f;
+		pos.X += 400.f * index;
+		bucket3d[index] = GetWorld()->SpawnActor<AGrid>(GBP, pos, FRotator::ZeroRotator, SpawnParameters);
+		bucket3d[index]->size_x = 1;
+		bucket3d[index]->size_y = buckets[index].size();
+		bucket3d[index]->setSize();
+
+		for (int ii = 0; ii < bucket3d[index]->size_y; ii++)
+		{
+			bucket3d[index]->grid[ii][0] = buckets[index][ii]->id;
+		}
+		bucket3d[index]->next = true;
+		return;
+	}
+	int Oi = index;
+	index = index % (MaxWT + 1);
 	if (bucket3d[index] != nullptr)
 	{
 		for (int ii = 0; ii < bucket3d[index]->size_y; ii++)
@@ -444,12 +469,13 @@ void AGraph::update_buckets(int index)
 	pos.X += 400.f * index;
 	bucket3d[index] = GetWorld()->SpawnActor<AGrid>(GBP, pos, FRotator::ZeroRotator, SpawnParameters);
 	bucket3d[index]->size_x = 1;
-	bucket3d[index]->size_y = buckets[index].size();
+	bucket3d[index]->size_y = buckets[Oi].size();
 	bucket3d[index]->setSize();
-
+	b_mat->grid[0][index] = Oi;
+	b_mat->next = true;
 	for (int ii = 0; ii < bucket3d[index]->size_y; ii++)
 	{
-		bucket3d[index]->grid[ii][0] = buckets[index][ii]->id;
+		bucket3d[index]->grid[ii][0] = buckets[Oi][ii]->id;
 	}
 	bucket3d[index]->next = true;
 }

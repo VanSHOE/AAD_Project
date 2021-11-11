@@ -35,7 +35,8 @@ public:
 		int64 size_z;
 	UPROPERTY(EditAnywhere)
 		int64 nodes;
-
+	UPROPERTY(EditAnywhere)
+		bool optimized = false;
 	//UPROPERTY(EditAnywhere)
 		int64 mn = 5;
 	int64 fib_n = 5;
