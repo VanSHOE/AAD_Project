@@ -35,15 +35,17 @@ public:
 		int64 size_z;
 	UPROPERTY(EditAnywhere)
 		int64 nodes;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		bool optimized = false;
+	UPROPERTY(EditAnywhere)
+		bool allowNegative = false;
 	//UPROPERTY(EditAnywhere)
 		int64 mn = 5;
 	int64 fib_n = 5;
 
-	//UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere)
 		uint64 edges = 0;
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 		int DistanceBetweenNodes = 400;
 	UPROPERTY(EditAnywhere)
 		int ProbabilityIn1byX = 5;
@@ -87,7 +89,7 @@ public:
 		bool AUTO = false;
 	UPROPERTY(VisibleAnywhere)
 		int cur_step = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float headsize = 25.f;
 protected:
 	// Called when the game starts or when spawned
@@ -166,11 +168,13 @@ private:
 	struct bford
 	{
 		int i = 0;
-		int j = 1;
+		int j = 0;
+		int k = 0;
 		void reset()
 		{
 			i = 0;
 			j = 0;
+			k = 0;
 		}
 	} bfc;
 	struct qsort_m
@@ -197,9 +201,9 @@ private:
 			j = 0;
 		}
 	} qm;
-	UPROPERTY(VisibleAnywhere)
+//	UPROPERTY(VisibleAnywhere)
 		bool NegativeCycle = false;
-	UPROPERTY(VisibleAnywhere)
+//	UPROPERTY(VisibleAnywhere)
 		int MaxIt = 0;
 	std::vector<std::vector<AGraphNode*>> SCCs;
 	//std::set <std::pair<int64, AGraphNode*>> pq; 

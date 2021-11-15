@@ -148,7 +148,11 @@ void AGraph::Tick(float DeltaTime)
 		if (i >= nodes - 1)
 		{
 			i = j = 0;
-			cur_step = 3;
+			cur_step = 2;
+			for (int ii = 0; ii < nodes; ii++)
+			{
+				mat->up(ii, ii, 0);
+			}
 			for (int ii = 0; ii < Edge_Store.size(); ii++)
 			{
 				int swap2 = rand() % Edge_Store.size();
@@ -200,7 +204,10 @@ void AGraph::Tick(float DeltaTime)
 					q.edge->SetActorScale3D(scale);
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
 					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParameters);
-					q.edge->Text->val = rand() % (2 * MaxWT);// -MaxWT;
+					if (!allowNegative)
+						q.edge->Text->val = rand() % (MaxWT);
+					else
+						q.edge->Text->val = rand() % (2 * MaxWT) - MaxWT;
 					q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
 					//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
 					//	q.edge->dp->val = INT_MAX;
@@ -215,6 +222,7 @@ void AGraph::Tick(float DeltaTime)
 					qq.from = Store[i];
 					qq.to = Store[j];
 					qq.edge = q.edge;
+					mat->up(qq.from->val, qq.to->val, qq.edge->Text->val);
 					Edge_Store.push_back(qq);
 
 					edges++;
@@ -231,114 +239,60 @@ void AGraph::Tick(float DeltaTime)
 	}
 	else if (cur_step == 2)
 	{
+		//if (!next && !AUTO)
+		//{
+		//	return;
+		//}
+		//next = false;
+
+		if (bfc.j >= nodes)
+		{
+			bfc.j = 0;
+			bfc.i++;
+		}
+		
+		if (bfc.i >= nodes)
+		{
+			for (int ii = 0; ii < nodes; ii++)
+			{
+				for (int jj = 0; jj < nodes; jj++)
+				{
+					mat->text_color(ii, jj, 0);
+				}
+			}
+			bfc.i =	bfc.j = 0;
+			bfc.k++;
+		}
+		
+		if (bfc.k >= nodes)
+		{
+			for (int ii = 0; ii < nodes; ii++)
+			{
+				for (int jj = 0; jj < nodes; jj++)
+				{
+					mat->text_color(ii, jj, 2);
+				}
+			}
+			cur_step = -99;
+			return;
+		}
+		UE_LOG(LogTemp, Log, TEXT("%d %d %d"), bfc.k, bfc.i, bfc.j);
+		mat->text_color(bfc.i, bfc.j, 1);
+		cur_step++;
+	}
+	else if (cur_step == 3)
+	{
 		if (!next && !AUTO)
 		{
 			return;
 		}
 		next = false;
-		if (bfc.j >= edges)
-		{
-			bfc.j = 0;
-			bfc.i++;
-			for (int qq = 0; qq < Edge_Store.size(); qq++)
-			{
-				edge_color(Edge_Store[qq].edge, false, false);
-			}
-		}
-		if (bfc.i >= nodes)
-		{
-			cur_step = -2;
-			return;
-		}
-		auto cedge = Edge_Store[bfc.j];
-		edge_color(cedge.edge, false, true);
-		UE_LOG(LogTemp, Warning, TEXT("%d: %d %d %d"), bfc.i, cedge.from->id, cedge.to->id, cedge.edge->Text->val);
-		/*	if (mat->grid[bfc.i][cedge.from->id] != INT_MAX && mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val < mat->grid[bfc.i][cedge.to->id])
-		{
-			mat->grid[bfc.i][cedge.to->id] = mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val;
-			UE_LOG(LogTemp, Warning, TEXT("in"));
-			mat->up(bfc.i, cedge.to->id);
-		}*/
-		UE_LOG(LogTemp, Warning, TEXT("%d < %d and from edge is %d "), bfo[cedge.from->id] + cedge.edge->Text->val, bfo[cedge.to->id], bfo[cedge.from->id]);
-		if (bfo[cedge.from->id] != INT_MAX && bfo[cedge.from->id] + cedge.edge->Text->val < bfo[cedge.to->id])
-		{
-			bfo[cedge.to->id] = bfo[cedge.from->id] + cedge.edge->Text->val;
-			UE_LOG(LogTemp, Warning, TEXT("in"));
-		}
-		if (bfo[cedge.to->id] != INT_MAX)
-		{
-			//mat->grid[bfc.i][cedge.to->id] = bfo[cedge.to->id];
-			mat->up(bfc.i, cedge.to->id, bfo[cedge.to->id]);
-		}
+
+		if (mat->grid[bfc.i][bfc.k] != INT_MAX && mat->grid[bfc.k][bfc.j] != INT_MAX && mat->grid[bfc.i][bfc.j] > mat->grid[bfc.i][bfc.k] + mat->grid[bfc.k][bfc.j])
+			mat->up(bfc.i, bfc.j, mat->grid[bfc.i][bfc.k] + mat->grid[bfc.k][bfc.j]);
+
 		bfc.j++;
-	}
-	else if (cur_step == 3)
-	{
-
-		for (int ii = 0; ii < nodes - 1; ii++)
-		{
-			bool over = true;
-			for (int jj = 0; jj < edges; jj++)
-			{
-				auto cedge = Edge_Store[jj];
-				if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
-				{
-					over = false;
-					bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
-					prev[cedge.to->id] = cedge;
-				}
-			}
-			if (!over) MaxIt++;
-		}
-
-		for (int jj = 0; jj < edges; jj++)
-		{
-			auto cedge = Edge_Store[jj];
-			if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
-			{
-				bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
-				prev[cedge.to->id] = cedge;
-				NegativeCycle = true;
-				cur_step = 2;
-				return;
-			}
-		}
-
-		int curr = -1;
-		int mxx = -1;
-		for (int ii = 1; ii < nodes; ii++)
-		{
-			int len = 0;
-			//auto cedge = Edge_Store[ii];
-
-			if (bfknown[ii] == INT_MAX) continue;
-			int temp = ii;
-			while (temp)
-			{
-				len++;
-				temp = prev[temp].from->id;
-			}
-			if (len >= mxx)
-			{
-				mxx = len;
-				curr = ii;
-			}
-		}
-		if (curr == -1)
-		{
-			cur_step = 2;
-			return;
-		}
-
-		auto temp = curr;
-		while (temp)
-		{
-			auto e = prev[temp];
-			edge_color(e.edge, true, false);
-			inPath.insert(e.edge);
-			temp = e.from->id;
-		}
-		cur_step = 2;
+		cur_step--;
 	}
 }
 
