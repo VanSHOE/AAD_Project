@@ -109,7 +109,7 @@ public:
 	void node_color(AGraphNode* n, bool green, float opacity = 0.75f);
 	void edge_color(AGraphEdge* n, bool green = true, bool shine = true);
 	AGrid* mat;
-	AGrid* b_mat;
+//	AGrid* b_mat;
 	UPROPERTY(EditAnywhere)
 		double delay = 0.01f;
 	FString c2s(int l, int r);
@@ -156,8 +156,8 @@ private:
 		}
 	} itsc;
 	AGraphNode* bucket_min();
-	std::vector<std::deque<AGraphNode*>> buckets;
-	std::vector<AGrid*> bucket3d;
+	//std::vector<std::deque<AGraphNode*>> buckets;
+	//std::vector<AGrid*> bucket3d;
 	AGraphNode* groot;
 	bool skip = false;
 	int cur_bfs = 0;
@@ -197,10 +197,10 @@ private:
 			j = 0;
 		}
 	} qm;
-	//UPROPERTY(VisibleAnywhere)
-		//bool NegativeCycle = false;
-	//UPROPERTY(VisibleAnywhere)
-		//int MaxIt = 0;
+	UPROPERTY(VisibleAnywhere)
+		bool NegativeCycle = false;
+	UPROPERTY(VisibleAnywhere)
+		int MaxIt = 0;
 	std::vector<std::vector<AGraphNode*>> SCCs;
 	//std::set <std::pair<int64, AGraphNode*>> pq; 
 	std::unordered_set<AGraphEdge*> inPath;

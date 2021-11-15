@@ -26,7 +26,6 @@ AGraph::AGraph()
 void AGraph::BeginPlay()
 {
 	Super::BeginPlay();
-	secondDFS = false;
 	fib_n = mn;
 	groot = nullptr;
 	i = j = k = 0;
@@ -40,7 +39,6 @@ void AGraph::BeginPlay()
 	oz = SpawnPosition.Z;
 	cur_bfs = 0;
 	Store.clear();
-	r_store.clear();
 	Edge_Store.clear();
 	if (nodes >= size_z * size_y * size_x)
 	{
@@ -49,46 +47,33 @@ void AGraph::BeginPlay()
 	g_index = nodes - 1;
 	skip = false;
 	c_val = 0;
-	setCounter = 0;
 	me.assign(fib_n + 1, false);
 	mem = false;
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
-	buckets.assign(nodes * MaxWT + 1, std::deque<AGraphNode*>());
-	bucket3d.assign(optimized ? MaxWT + 1 : (MaxWT * nodes + 1) , nullptr);
-
 	TArray<AActor*> a;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
 	mat = Cast<AGrid>(a[0]);
-	b_mat = Cast<AGrid>(a[1]);
-
-	b_mat->size_x = optimized ? MaxWT + 1 : (MaxWT * nodes + 1);
-	b_mat->size_y = 1;
-	b_mat->setSize();
-	for (int ii = 0; ii < b_mat->size_x; ii++)
-	{
-		b_mat->grid[0][ii] = ii;
-	}
-	b_mat->next = true;
-
-	mat->size_x = nodes;
-	mat->size_y = 1;
+	mat->size_y = mat->size_x = nodes;
 	mat->setSize();
-	for (int ii = 0; ii < mat->size_x; ii++)
-	{
-		mat->grid[0][ii] = INT_MAX;
-	}
 	mat->next = true;
-
-
-	first.clear();
 	second.clear();
-	fStack.clear();
-	SCCs.clear();
-	adjm.clear();
-	d_idx = 0;
+	edges = 0;
+	bfc.reset();
+	bfo.clear();
+	bfo.assign(nodes, INT_MAX);
+	bfknown.clear();
+	bfknown.assign(nodes, INT_MAX);
+	prev.clear();
+	for (int ii = 0; ii < nodes; ii++)
+	{
+		EdgeStorage q;
+		prev.push_back(q);
+	}
+	bfo[0] = 0;
+	bfknown[0] = 0;
+	inPath.clear();
 }
-
 // Called every frame
 void AGraph::Tick(float DeltaTime)
 {
@@ -139,13 +124,12 @@ void AGraph::Tick(float DeltaTime)
 			if (rand() % ProbabilityIn1byX == 0)
 			{
 				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParameters);
-				grid3d[i][j][k]->val = INT_MAX;
-				grid3d[i][j][k]->id = c_val;
+				grid3d[i][j][k]->val = c_val;
 				grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(c_val++)));
 				grid3d[i][j][k]->my_i = i;
 				grid3d[i][j][k]->my_j = j;
 				grid3d[i][j][k]->my_k = k;
-
+				grid3d[i][j][k]->id = grid3d[i][j][k]->val;
 				cnodes++;
 				Store.push_back(grid3d[i][j][k]);
 			}
@@ -164,22 +148,14 @@ void AGraph::Tick(float DeltaTime)
 		if (i >= nodes - 1)
 		{
 			i = j = 0;
-			cur_step = 2;
-			//pq.insert({ 0, Store[0] });
-
-			buckets[0].push_front(Store[0]);
-			Store[0]->val = 0;
-			print_buckets();
-			update_buckets(d_idx);
-			/*
-			for (int ii = 0; ii < Edge_Store.size() / 2; ii++)
+			cur_step = 3;
+			for (int ii = 0; ii < Edge_Store.size(); ii++)
 			{
-				int swap2 = Edge_Store.size() - 1 - ii; //rand() % Edge_Store.size();
+				int swap2 = rand() % Edge_Store.size();
 				auto temp = Edge_Store[ii];
 				Edge_Store[ii] = Edge_Store[swap2];
 				Edge_Store[swap2] = temp;
 			}
-			*/
 			//second.push_back(Store[0]);
 			return;
 		}
@@ -208,6 +184,7 @@ void AGraph::Tick(float DeltaTime)
 
 		if (GetWorld()->LineTraceSingleByChannel(*HitResult, StartTrace, EndTrace, ECC_Visibility, *TraceParams))
 		{
+
 			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("You hit: %s"), *HitResult->Actor->GetName()));
 			auto who = HitResult->GetActor();
 			if (who->IsA(AGraphNode::StaticClass()) && rand() % Ep == 0)
@@ -223,7 +200,7 @@ void AGraph::Tick(float DeltaTime)
 					q.edge->SetActorScale3D(scale);
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
 					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParameters);
-					q.edge->Text->val = rand() % (MaxWT + 1);
+					q.edge->Text->val = rand() % (2 * MaxWT);// -MaxWT;
 					q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
 					//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
 					//	q.edge->dp->val = INT_MAX;
@@ -259,71 +236,109 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-
-		if (d_idx >= mat->size_x)
+		if (bfc.j >= edges)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Buckets over"));
-		//	setpq();
-			cur_step = -99;
+			bfc.j = 0;
+			bfc.i++;
+			for (int qq = 0; qq < Edge_Store.size(); qq++)
+			{
+				edge_color(Edge_Store[qq].edge, false, false);
+			}
+		}
+		if (bfc.i >= nodes)
+		{
+			cur_step = -2;
 			return;
 		}
-
-		curnode = bucket_min();
-		if (curnode == nullptr) return;
-		if (curnode->visited == true)
+		auto cedge = Edge_Store[bfc.j];
+		edge_color(cedge.edge, false, true);
+		UE_LOG(LogTemp, Warning, TEXT("%d: %d %d %d"), bfc.i, cedge.from->id, cedge.to->id, cedge.edge->Text->val);
+		/*	if (mat->grid[bfc.i][cedge.from->id] != INT_MAX && mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val < mat->grid[bfc.i][cedge.to->id])
 		{
-			//pq.erase(pq.begin());
-			UE_LOG(LogTemp, Warning, TEXT("Visited already"));
-			print_buckets();
-			update_buckets(d_idx);
-			berase(curnode, d_idx);
-			curnode = nullptr;
-			return;
+			mat->grid[bfc.i][cedge.to->id] = mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val;
+			UE_LOG(LogTemp, Warning, TEXT("in"));
+			mat->up(bfc.i, cedge.to->id);
+		}*/
+		UE_LOG(LogTemp, Warning, TEXT("%d < %d and from edge is %d "), bfo[cedge.from->id] + cedge.edge->Text->val, bfo[cedge.to->id], bfo[cedge.from->id]);
+		if (bfo[cedge.from->id] != INT_MAX && bfo[cedge.from->id] + cedge.edge->Text->val < bfo[cedge.to->id])
+		{
+			bfo[cedge.to->id] = bfo[cedge.from->id] + cedge.edge->Text->val;
+			UE_LOG(LogTemp, Warning, TEXT("in"));
 		}
-		node_color(curnode, 1);
-		mat->up(0, curnode->id, d_idx);
-		//pq.erase(pq.begin());
-		//setpq();
-		berase(curnode, d_idx);
-		curnode->visited = true;
-		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *curnode->GetName());
-		print_buckets();
-		update_buckets(d_idx);
-		cur_step++;
-		DCcounter = 0;
+		if (bfo[cedge.to->id] != INT_MAX)
+		{
+			//mat->grid[bfc.i][cedge.to->id] = bfo[cedge.to->id];
+			mat->up(bfc.i, cedge.to->id, bfo[cedge.to->id]);
+		}
+		bfc.j++;
 	}
 	else if (cur_step == 3)
 	{
-		if (!next && !AUTO)
+
+		for (int ii = 0; ii < nodes - 1; ii++)
 		{
-			return;
-		}
-		next = false;
-		if (DCcounter >= curnode->edges.size())
-		{
-			DCcounter = 0;
-			cur_step--;
-			return;
-		}
-		auto e = curnode->edges[DCcounter++];
-		edge_color(e.edge, false, true);
-		
-		if (e.nbor->visited == false && (e.nbor->val == INT_MAX || curnode->val + e.edge->Text->val < e.nbor->val))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Adding %s on pq, from %s"), *e.nbor->GetName(), *curnode->GetName());
-			if (e.nbor->val != INT_MAX)
+			bool over = true;
+			for (int jj = 0; jj < edges; jj++)
 			{
-				berase(e.nbor, e.nbor->val);
-				update_buckets(e.nbor->val);
+				auto cedge = Edge_Store[jj];
+				if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
+				{
+					over = false;
+					bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
+					prev[cedge.to->id] = cedge;
+				}
 			}
-			e.nbor->val = curnode->val + e.edge->Text->val;
-			//pq.insert({ e.nbor->val, e.nbor });
-			//if(!AUTO)
-			//setpq();
-			buckets[e.nbor->val].push_front(e.nbor);
-			print_buckets();
-			update_buckets(e.nbor->val);
+			if (!over) MaxIt++;
 		}
+
+		for (int jj = 0; jj < edges; jj++)
+		{
+			auto cedge = Edge_Store[jj];
+			if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
+			{
+				bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
+				prev[cedge.to->id] = cedge;
+				NegativeCycle = true;
+				cur_step = 2;
+				return;
+			}
+		}
+
+		int curr = -1;
+		int mxx = -1;
+		for (int ii = 1; ii < nodes; ii++)
+		{
+			int len = 0;
+			//auto cedge = Edge_Store[ii];
+
+			if (bfknown[ii] == INT_MAX) continue;
+			int temp = ii;
+			while (temp)
+			{
+				len++;
+				temp = prev[temp].from->id;
+			}
+			if (len >= mxx)
+			{
+				mxx = len;
+				curr = ii;
+			}
+		}
+		if (curr == -1)
+		{
+			cur_step = 2;
+			return;
+		}
+
+		auto temp = curr;
+		while (temp)
+		{
+			auto e = prev[temp];
+			edge_color(e.edge, true, false);
+			inPath.insert(e.edge);
+			temp = e.from->id;
+		}
+		cur_step = 2;
 	}
 }
 
@@ -384,98 +399,6 @@ void AGraph::setpq()
 }
 */
 
-AGraphNode* AGraph::bucket_min()
-{
-	while (d_idx < buckets.size() && buckets[d_idx].empty())
-		d_idx++;
 
-	if (d_idx >= mat->size_x)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Buckets over"));
-		//	setpq();
-		cur_step = -99;
-		return nullptr;
-	}
-	
-	return buckets[d_idx].back();
-}
 
-void AGraph::berase(AGraphNode* to_delete, int bucket_index)
-{
-	for (auto it = buckets[bucket_index].begin(); it != buckets[bucket_index].end(); it++)
-	{
-		if (*it == to_delete)
-		{
-			buckets[bucket_index].erase(it);
-			return;
-		}
-	}
-}
 
-void AGraph::print_buckets()
-{
-	for (int ii = 0; ii < buckets.size(); ii++)
-	{
-		FString tp = FString::FromInt(ii) + ":";
-		bool ran = false;
-		for (auto qq : buckets[ii])
-		{
-			ran = true;
-			tp = tp + " " + qq->GetName();
-		}
-		if(ran)
-			UE_LOG(LogTemp, Log, TEXT("%s"), *tp);
-	}
-}
-void AGraph::update_buckets(int index)
-{
-	if (!optimized)
-	{
-		if (bucket3d[index] != nullptr)
-		{
-			for (int ii = 0; ii < bucket3d[index]->size_y; ii++)
-			{
-				bucket3d[index]->grid3d[ii][0]->Destroy();
-			}
-			bucket3d[index]->Destroy();
-		}
-		FVector pos = b_mat->GetActorLocation();
-		pos.Y += 400.f;
-		pos.X += 400.f * index;
-		bucket3d[index] = GetWorld()->SpawnActor<AGrid>(GBP, pos, FRotator::ZeroRotator, SpawnParameters);
-		bucket3d[index]->size_x = 1;
-		bucket3d[index]->size_y = buckets[index].size();
-		bucket3d[index]->setSize();
-
-		for (int ii = 0; ii < bucket3d[index]->size_y; ii++)
-		{
-			bucket3d[index]->grid[ii][0] = buckets[index][ii]->id;
-		}
-		bucket3d[index]->next = true;
-		return;
-	}
-	int Oi = index;
-	index = index % (MaxWT + 1);
-	if (bucket3d[index] != nullptr)
-	{
-		for (int ii = 0; ii < bucket3d[index]->size_y; ii++)
-		{
-			bucket3d[index]->grid3d[ii][0]->Destroy();
-		}
-		bucket3d[index]->Destroy();
-	}
-	FVector pos = b_mat->GetActorLocation();
-	pos.Y += 400.f;
-	pos.X += 400.f * index;
-	bucket3d[index] = GetWorld()->SpawnActor<AGrid>(GBP, pos, FRotator::ZeroRotator, SpawnParameters);
-	bucket3d[index]->size_x = 1;
-	bucket3d[index]->size_y = buckets[Oi].size();
-	bucket3d[index]->setSize();
-	b_mat->grid[0][index] = Oi;
-	b_mat->next = true;
-	for (int ii = 0; ii < bucket3d[index]->size_y; ii++)
-	{
-		bucket3d[index]->grid[ii][0] = buckets[Oi][ii]->id;
-	}
-	bucket3d[index]->next = true;
-}
