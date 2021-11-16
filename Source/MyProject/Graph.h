@@ -127,6 +127,7 @@ private:
 	int cnodes = 0;
 	double last = 0;
 	//int ppt;
+	std::vector<std::vector<std::vector<EdgeStorage>>> prev_floyd;
 	struct msrtflags
 	{
 		int i = 0;
@@ -216,5 +217,5 @@ private:
 
 	void print_buckets();
 	void update_buckets(int index);
-
+	void reset_colors();
 };

@@ -73,6 +73,8 @@ void AGraph::BeginPlay()
 	bfo[0] = 0;
 	bfknown[0] = 0;
 	inPath.clear();
+	prev_floyd.clear();
+	prev_floyd.assign(nodes, std::vector < std::vector<EdgeStorage> >(nodes));
 }
 // Called every frame
 void AGraph::Tick(float DeltaTime)
@@ -222,10 +224,10 @@ void AGraph::Tick(float DeltaTime)
 					qq.from = Store[i];
 					qq.to = Store[j];
 					qq.edge = q.edge;
-					mat->up(qq.from->val, qq.to->val, qq.edge->Text->val);
 					Edge_Store.push_back(qq);
-
+					mat->up(qq.from->val, qq.to->val, qq.edge->Text->val);
 					edges++;
+					prev_floyd[qq.from->val][qq.to->val].push_back(qq);
 					//q.i = Store[i]->my_i;
 					//q.j = Store[i]->my_j;
 					//q.k = Store[i]->my_k;
@@ -239,18 +241,17 @@ void AGraph::Tick(float DeltaTime)
 	}
 	else if (cur_step == 2)
 	{
-		//if (!next && !AUTO)
-		//{
-		//	return;
-		//}
-		//next = false;
-
+		if (!next && !AUTO)
+		{
+			return;
+		}
+		next = false;
+		
 		if (bfc.j >= nodes)
 		{
 			bfc.j = 0;
 			bfc.i++;
 		}
-		
 		if (bfc.i >= nodes)
 		{
 			for (int ii = 0; ii < nodes; ii++)
@@ -263,7 +264,6 @@ void AGraph::Tick(float DeltaTime)
 			bfc.i =	bfc.j = 0;
 			bfc.k++;
 		}
-		
 		if (bfc.k >= nodes)
 		{
 			for (int ii = 0; ii < nodes; ii++)
@@ -276,6 +276,20 @@ void AGraph::Tick(float DeltaTime)
 			cur_step = -99;
 			return;
 		}
+		reset_colors();
+		for (int ii = 0; ii <= bfc.k; ii++)
+		{
+			node_color(Store[ii], false);
+		}
+
+		node_color(Store[bfc.j], true);
+		for (auto x : prev_floyd[bfc.i][bfc.j])
+		{
+			node_color(x.from, true);
+			edge_color(x.edge, true, true);
+			node_color(x.to, true);
+		}
+		node_color(Store[bfc.i], true, 0.35f);
 		UE_LOG(LogTemp, Log, TEXT("%d %d %d"), bfc.k, bfc.i, bfc.j);
 		mat->text_color(bfc.i, bfc.j, 1);
 		cur_step++;
@@ -286,11 +300,34 @@ void AGraph::Tick(float DeltaTime)
 		{
 			return;
 		}
-		next = false;
+		next = true;
 
 		if (mat->grid[bfc.i][bfc.k] != INT_MAX && mat->grid[bfc.k][bfc.j] != INT_MAX && mat->grid[bfc.i][bfc.j] > mat->grid[bfc.i][bfc.k] + mat->grid[bfc.k][bfc.j])
+		{
+			next = false;
 			mat->up(bfc.i, bfc.j, mat->grid[bfc.i][bfc.k] + mat->grid[bfc.k][bfc.j]);
-
+			prev_floyd[bfc.i][bfc.j].clear();
+			for (auto x : prev_floyd[bfc.i][bfc.k])
+			{
+				prev_floyd[bfc.i][bfc.j].push_back(x);
+			}
+			for (auto x : prev_floyd[bfc.k][bfc.j])
+			{
+				prev_floyd[bfc.i][bfc.j].push_back(x);
+			}
+			reset_colors();
+			for (int ii = 0; ii <= bfc.k; ii++)
+			{
+				node_color(Store[ii], false);
+			}
+			for (auto x : prev_floyd[bfc.i][bfc.j])
+			{
+				node_color(x.from, true);
+				edge_color(x.edge, true, true);
+				node_color(x.to, true);
+			}
+			node_color(Store[bfc.i], true, 0.35f);
+		}
 		bfc.j++;
 		cur_step--;
 	}
@@ -334,25 +371,14 @@ FString AGraph::c2s(int32 l, int32 r)
 {
 	return "[" + FString::FromInt(l) + ", " + FString::FromInt(r) + ")";
 }
-/*
-void AGraph::setpq()
+void AGraph::reset_colors()
 {
-	int ii = 0;
-	for (auto x : pq)
-	{	
-		if (ii >= pqmat->size_y) return;
-		FString pqstring = c2s(x.second->id, x.first);
-		pqmat->grid3d[ii++][0]->Text->SetText(FText::FromString(pqstring));
-	}
-	while (ii < pqmat->size_y)
+	for (auto x : Edge_Store)
 	{
-		pqmat->grid3d[ii][0]->Text->SetText(FText::FromString("-"));
-		ii++;
+		edge_color(x.edge, false, false);
 	}
-
+	for (auto x : Store)
+	{
+		node_color(x, false, 0.35f);
+	}
 }
-*/
-
-
-
-
