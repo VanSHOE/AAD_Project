@@ -22,6 +22,7 @@ public:
 	
 	AEdgeHead* head = nullptr;
 	AEWeight* Text = nullptr;
+	AEWeight* RText = nullptr;
 	AEWeight* dp = nullptr;
 	bool g = false;
 	AGraphEdge();
