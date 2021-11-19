@@ -48,6 +48,9 @@ void AGraph::BeginPlay()
 	//me.assign(fib_n + 1, false);
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
 	second.clear();
+	totalFlow = cFlow = bfsFlow = 0;
+	started = false;
+	prev.clear();
 }
 // Called every frame
 void AGraph::Tick(float DeltaTime)
@@ -93,7 +96,7 @@ void AGraph::Tick(float DeltaTime)
 			if (rand() % ProbabilityIn1byX == 0)
 			{
 				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParameters);
-				grid3d[i][j][k]->val = c_val;
+				grid3d[i][j][k]->val = grid3d[i][j][k]->id = c_val;
 				grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(c_val++)));
 				grid3d[i][j][k]->my_i = i;
 				grid3d[i][j][k]->my_j = j;
@@ -116,8 +119,7 @@ void AGraph::Tick(float DeltaTime)
 		if (i >= nodes - 1)
 		{
 			i = j = 0;
-			cur_step = 2;
-			second.push_back(Store[0]);
+			cur_step = 4;
 			return;
 		}
 		if (i == j)
@@ -165,13 +167,17 @@ void AGraph::Tick(float DeltaTime)
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
 					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParameters);
 					q.edge->RText = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParameters);
-					
+					FRotator reverseTextRot = { 0,180,180 };
+					q.edge->Text->AddActorLocalRotation(reverseTextRot.Quaternion());
 					if (!allowNegative)
-						q.edge->Text->cap = rand() % (MaxWT);
+						q.edge->Text->cap = rand() % (MaxWT) + (!zeroWT);
 					else
 						q.edge->Text->cap = rand() % (2 * MaxWT) - MaxWT;
 					//q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
 					q.edge->Text->Set();
+					q.edge->RText->cap = 0;
+					q.edge->RText->Set();
+					
 					//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
 					//	q.edge->dp->val = INT_MAX;
 					//	q.edge->dp->Text->SetText(FText::FromString(TEXT("Inf")));
@@ -212,7 +218,8 @@ void AGraph::Tick(float DeltaTime)
 			cur_step = 4;
 			return;
 		}
-		cur = second[0];
+		cur = second[0].node;
+		cFlow = second[0].cur_flow;
 		cur->visited = true;
 		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *cur->GetName());
 		node_color(cur, 1);
@@ -236,12 +243,25 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		UE_LOG(LogTemp, Warning, TEXT("On %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
-		if (cur->edges[cur_bfs].nbor->visited == false)
+		if (cur->edges[cur_bfs].nbor->visited == false) // TODO Add reverse checking
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Adding %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
 			node_color(cur->edges[cur_bfs].nbor, 0);
 			cur->edges[cur_bfs].nbor->visited = true;
-			second.push_back(cur->edges[cur_bfs].nbor);
+			int64 newflow = min(cFlow, cur->edges[cur_bfs].edge->Text->cap - cur->edges[cur_bfs].edge->Text->used);
+
+			if (cur->edges[cur_bfs].nbor == Store.back())
+			{
+				bfsFlow = newflow;
+				cur_step = 4;
+				return;
+			}
+			EdgeStorage qqqq;
+			qqqq.from = cur;
+			qqqq.to = cur->edges[cur_bfs].nbor;
+			qqqq.edge = cur->edges[cur_bfs].edge;
+			prev[cur->edges[cur_bfs].nbor->id] = qqqq;
+			second.push_back({ cur->edges[cur_bfs].nbor, newflow });
 		}
 		else skip = true;
 		cur_bfs++;
@@ -253,6 +273,7 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
+		/*
 		UE_LOG(LogTemp, Warning, TEXT("We are now searching"));
 		for (int ii = 0; ii < Store.size(); ii++)
 		{
@@ -266,7 +287,33 @@ void AGraph::Tick(float DeltaTime)
 			}
 		}
 		cur_step = 99;
-
+		*/
+		if (started)
+		{
+			if (bfsFlow == 0)
+			{
+				cur_step = -99;
+				return;
+			}
+			auto it = prev[nodes - 1];
+			while (it.edge)
+			{
+				it.edge->Text->used += bfsFlow;
+				it.edge->Text->Set();
+				it.edge->RText->used -= bfsFlow;
+				it.edge->RText->Set();
+				if (it.from == Store[0]) break;
+				it = prev[it.from->id];
+			}
+		}
+		started = true;
+		prev.clear();
+		prev.resize(nodes);
+		second.clear();
+		second.push_back({ Store[0], INT_MAX });
+		totalFlow += bfsFlow;
+		bfsFlow = cFlow = 0;
+		cur_step = 2;
 	}
 	//UE_LOG(LogTemp, Warning, TEXT("GOT OUT w"));
 

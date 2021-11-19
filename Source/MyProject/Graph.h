@@ -37,7 +37,7 @@ public:
 		int64 nodes;
 	//UPROPERTY(EditAnywhere)
 		bool optimized = false;
-	UPROPERTY(EditAnywhere)
+//	UPROPERTY(EditAnywhere)
 		bool allowNegative = false;
 	//UPROPERTY(EditAnywhere)
 		int64 mn = 5;
@@ -99,7 +99,7 @@ public:
 	// Called every frame
 	std::deque< AGraphNode*> first;
 	std::deque< AGraphNode*> fStack;
-	std::deque< AGraphNode*> second;
+
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool mem = false;
 	std::vector<bool> me;
@@ -116,7 +116,10 @@ public:
 		double delay = 0.01f;
 	FString c2s(int l, int r);
 	void setpq();
-
+	UPROPERTY(EditAnywhere)
+		bool zeroWT = true;
+	UPROPERTY(VisibleAnywhere)
+		int64 totalFlow = 0;
 private:
 	int d_idx = 0;
 	bool secondDFS = false;
@@ -202,20 +205,31 @@ private:
 			j = 0;
 		}
 	} qm;
+	struct maxFlowQueue
+	{
+		AGraphNode* node = nullptr;
+		int64 cur_flow = 0;
+	};
+	std::deque<maxFlowQueue> second;
 //	UPROPERTY(VisibleAnywhere)
 		bool NegativeCycle = false;
 //	UPROPERTY(VisibleAnywhere)
 		int MaxIt = 0;
+
+
 	std::vector<std::vector<AGraphNode*>> SCCs;
 	//std::set <std::pair<int64, AGraphNode*>> pq; 
 	std::unordered_set<AGraphEdge*> inPath;
 	std::vector<int64> bfo;
 	std::vector<int64> bfknown;
 	std::vector<EdgeStorage> prev;
+
 	AGraphNode* curnode = nullptr;
 	int DCcounter = 0;
-
 	void print_buckets();
 	void update_buckets(int index);
 	void reset_colors();
+	int64 cFlow = 0;
+	int64 bfsFlow = 0;
+	bool started = false;
 };
