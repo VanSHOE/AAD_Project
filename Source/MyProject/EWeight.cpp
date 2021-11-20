@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "EWeight.h"
@@ -34,6 +34,6 @@ void AEWeight::Tick(float DeltaTime)
 
 void AEWeight::Set()
 {
-    Text->SetText(FText::FromString(FString::FromInt(used) + "/" + FString::FromInt(cap)));
+    Text->SetText(FText::FromString(FString::FromInt(used) + "/" + FString::FromInt(cap) + TEXT(" >>")));
 }
 

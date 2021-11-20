@@ -1,5 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+PRAGMA_DISABLE_OPTIMIZATION
 #include "GraphNode.h"
 
 #include "DrawDebugHelpers.h"
@@ -177,7 +177,7 @@ void AGraph::Tick(float DeltaTime)
 					q.edge->Text->Set();
 					q.edge->RText->cap = 0;
 					q.edge->RText->Set();
-					
+					q.reverse = false;
 					//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
 					//	q.edge->dp->val = INT_MAX;
 					//	q.edge->dp->Text->SetText(FText::FromString(TEXT("Inf")));
@@ -198,6 +198,7 @@ void AGraph::Tick(float DeltaTime)
 					q.j = Store[i]->my_j;
 				    q.k = Store[i]->my_k;
 					q.nbor = Store[i];
+					q.reverse = true;
 					Store[j]->edges.push_back(q);
 				}
 			}
@@ -243,18 +244,21 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		UE_LOG(LogTemp, Warning, TEXT("On %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
-		if (cur->edges[cur_bfs].nbor->visited == false) // TODO Add reverse checking
+		if (cur->edges[cur_bfs].nbor->visited == false && ((cur->edges[cur_bfs].reverse && (cur->edges[cur_bfs].edge->RText->used < cur->edges[cur_bfs].edge->RText->cap)) || (!cur->edges[cur_bfs].reverse && (cur->edges[cur_bfs].edge->Text->used < cur->edges[cur_bfs].edge->Text->cap)))) // TODO Add reverse checking
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Adding %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
 			node_color(cur->edges[cur_bfs].nbor, 0);
 			cur->edges[cur_bfs].nbor->visited = true;
-			int64 newflow = min(cFlow, cur->edges[cur_bfs].edge->Text->cap - cur->edges[cur_bfs].edge->Text->used);
-
+			int64 newflow;
+			if(!cur->edges[cur_bfs].reverse)
+				newflow = min(cFlow, cur->edges[cur_bfs].edge->Text->cap - cur->edges[cur_bfs].edge->Text->used);
+			else
+				newflow = min(cFlow, cur->edges[cur_bfs].edge->RText->cap - cur->edges[cur_bfs].edge->RText->used);
 			if (cur->edges[cur_bfs].nbor == Store.back())
 			{
 				bfsFlow = newflow;
 				cur_step = 4;
-				return;
+				//return;
 			}
 			EdgeStorage qqqq;
 			qqqq.from = cur;
@@ -288,6 +292,12 @@ void AGraph::Tick(float DeltaTime)
 		}
 		cur_step = 99;
 		*/
+		reset_colors();
+		for (auto x : Store)
+		{
+			x->visited = false;
+		}
+		cur_bfs = 0;
 		if (started)
 		{
 			if (bfsFlow == 0)

@@ -41,6 +41,7 @@ public:
 	{
 		AGraphEdge* edge;
 		AGraphNode* nbor;
+		bool reverse = false;
 		int i;
 		int j;
 		int k;
