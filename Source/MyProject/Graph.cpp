@@ -312,6 +312,7 @@ void AGraph::Tick(float DeltaTime)
 				it.edge->Text->Set();
 				it.edge->RText->used -= bfsFlow;
 				it.edge->RText->Set();
+				edge_color(it.edge, true, true);
 				if (it.from == Store[0]) break;
 				it = prev[it.from->id];
 			}
