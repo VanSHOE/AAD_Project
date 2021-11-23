@@ -190,6 +190,7 @@ void AGraph::Tick(float DeltaTime)
 					qq.from = Store[i];
 					qq.to = Store[j];
 					qq.edge = q.edge;
+				//	qq.reverse = 
 					Edge_Store.push_back(qq);
 					//mat->up(qq.from->val, qq.to->val, qq.edge->Text->val);
 					edges++;
@@ -264,6 +265,7 @@ void AGraph::Tick(float DeltaTime)
 			qqqq.from = cur;
 			qqqq.to = cur->edges[cur_bfs].nbor;
 			qqqq.edge = cur->edges[cur_bfs].edge;
+			qqqq.reverse = cur->edges[cur_bfs].reverse;
 			prev[cur->edges[cur_bfs].nbor->id] = qqqq;
 			second.push_back({ cur->edges[cur_bfs].nbor, newflow });
 		}
@@ -308,10 +310,20 @@ void AGraph::Tick(float DeltaTime)
 			auto it = prev[nodes - 1];
 			while (it.edge)
 			{
-				it.edge->Text->used += bfsFlow;
-				it.edge->Text->Set();
-				it.edge->RText->used -= bfsFlow;
-				it.edge->RText->Set();
+				if (it.reverse == false)
+				{
+					it.edge->Text->used += bfsFlow;
+					it.edge->Text->Set();
+					it.edge->RText->used -= bfsFlow;
+					it.edge->RText->Set();
+				}
+				else
+				{
+					it.edge->Text->used -= bfsFlow;
+					it.edge->Text->Set();
+					it.edge->RText->used += bfsFlow;
+					it.edge->RText->Set();
+				}
 				edge_color(it.edge, true, true);
 				if (it.from == Store[0]) break;
 				it = prev[it.from->id];

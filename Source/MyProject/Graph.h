@@ -74,6 +74,7 @@ public:
 		AGraphEdge* edge = nullptr;
 		AGraphNode* from = nullptr;
 		AGraphNode* to = nullptr;
+		bool reverse = false;
 		EdgeStorage()
 		{
 			edge = nullptr;
