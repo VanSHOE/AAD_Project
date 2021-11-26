@@ -28,7 +28,8 @@ void AGraph::BeginPlay()
 	Super::BeginPlay();
 	fib_n = mn;
 	groot = nullptr;
-	i = j = k = 0;
+	i = k = 0;
+	j = 1;
 	cur_step = 0;
 	cnodes = 0;
 	last = 0;
@@ -54,7 +55,8 @@ void AGraph::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
 	mat = Cast<AGrid>(a[0]);
-	mat->size_y = mat->size_x = nodes;
+	mat->size_y = 2;
+	mat->size_x = nodes;
 	mat->setSize();
 	mat->next = true;
 	second.clear();
@@ -73,6 +75,7 @@ void AGraph::BeginPlay()
 	bfo[0] = 0;
 	bfknown[0] = 0;
 	inPath.clear();
+	
 }
 // Called every frame
 void AGraph::Tick(float DeltaTime)
@@ -143,20 +146,32 @@ void AGraph::Tick(float DeltaTime)
 		if (j >= nodes)
 		{
 			i++;
-			j = 0;
+			j = i + 1;
 		}
 		if (i >= nodes - 1)
 		{
 			i = j = 0;
-			cur_step = 3;
-			for (int ii = 0; ii < Edge_Store.size(); ii++)
+			cur_step = 2;
+			for (int ii = 0; ii < nodes; ii++)
 			{
-				int swap2 = rand() % Edge_Store.size();
-				auto temp = Edge_Store[ii];
-				Edge_Store[ii] = Edge_Store[swap2];
-				Edge_Store[swap2] = temp;
+				mat->up(0, ii, ii);
+			}
+			mat->next = true;
+		//	std::sort(Edge_Store.begin(), Edge_Store.end(), e_cmp);
+			for (int ii = 0; ii < edges; ii++)
+			{
+				for (int jj = 0; jj < edges - 1; jj++)
+				{
+					if (!e_cmp(Edge_Store[jj], Edge_Store[jj + 1]))
+					{
+						auto tt = Edge_Store[jj];
+						Edge_Store[jj] = Edge_Store[jj + 1];
+						Edge_Store[jj + 1] = tt;
+					}
+				}
 			}
 			//second.push_back(Store[0]);
+			DSU.init(nodes);
 			return;
 		}
 		if (i == j)
@@ -195,7 +210,7 @@ void AGraph::Tick(float DeltaTime)
 					q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParameters);
 					auto hlocl = Tarloc;
 					hlocl -= (50.f + headsize) * ForwardVector;
-					GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParameters);
+					//GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParameters);
 					FVector scale = { 1, 1, dir.Size() - (100 + headsize) };
 					q.edge->SetActorScale3D(scale);
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
@@ -216,13 +231,16 @@ void AGraph::Tick(float DeltaTime)
 					qq.to = Store[j];
 					qq.edge = q.edge;
 					Edge_Store.push_back(qq);
-
+					qq.from = Store[j];
+					qq.to = Store[i];
+				//	Edge_Store.push_back(qq);
+					
 					edges++;
-					//q.i = Store[i]->my_i;
-					//q.j = Store[i]->my_j;
-					//q.k = Store[i]->my_k;
-					//q.nbor = Store[i];
-					//Store[j]->edges.push_back(q);
+					q.i = Store[i]->my_i;
+					q.j = Store[i]->my_j;
+					q.k = Store[i]->my_k;
+					q.nbor = Store[i];
+					Store[j]->edges.push_back(q);
 				}
 			}
 		}
@@ -239,107 +257,49 @@ void AGraph::Tick(float DeltaTime)
 		if (bfc.j >= edges)
 		{
 			bfc.j = 0;
-			bfc.i++;
-			for (int qq = 0; qq < Edge_Store.size(); qq++)
-			{
-				edge_color(Edge_Store[qq].edge, false, false);
-			}
-		}
-		if (bfc.i >= nodes)
-		{
+			//bfc.i++;
+	
 			cur_step = -2;
 			return;
 		}
+
 		auto cedge = Edge_Store[bfc.j];
 		edge_color(cedge.edge, false, true);
-		UE_LOG(LogTemp, Warning, TEXT("%d: %d %d %d"), bfc.i, cedge.from->id, cedge.to->id, cedge.edge->Text->val);
-		/*	if (mat->grid[bfc.i][cedge.from->id] != INT_MAX && mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val < mat->grid[bfc.i][cedge.to->id])
-		{
-			mat->grid[bfc.i][cedge.to->id] = mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val;
-			UE_LOG(LogTemp, Warning, TEXT("in"));
-			mat->up(bfc.i, cedge.to->id);
-		}*/
-		UE_LOG(LogTemp, Warning, TEXT("%d < %d and from edge is %d "), bfo[cedge.from->id] + cedge.edge->Text->val, bfo[cedge.to->id], bfo[cedge.from->id]);
-		if (bfo[cedge.from->id] != INT_MAX && bfo[cedge.from->id] + cedge.edge->Text->val < bfo[cedge.to->id])
-		{
-			bfo[cedge.to->id] = bfo[cedge.from->id] + cedge.edge->Text->val;
-			UE_LOG(LogTemp, Warning, TEXT("in"));
-		}
-		if (bfo[cedge.to->id] != INT_MAX)
-		{
-			//mat->grid[bfc.i][cedge.to->id] = bfo[cedge.to->id];
-			mat->up(bfc.i, cedge.to->id, bfo[cedge.to->id]);
-		}
-		bfc.j++;
+		UE_LOG(LogTemp, Warning, TEXT("%s: %d"), *Edge_Store[bfc.j].edge->GetName(), Edge_Store[bfc.j].edge->Text->val);
+
+		cur_step++;
+		return;
+
+
+	
+	
 	}
 	else if (cur_step == 3)
 	{
-
-		for (int ii = 0; ii < nodes - 1; ii++)
+		if (!next && !AUTO)
 		{
-			bool over = true;
-			for (int jj = 0; jj < edges; jj++)
-			{
-				auto cedge = Edge_Store[jj];
-				if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
-				{
-					over = false;
-					bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
-					prev[cedge.to->id] = cedge;
-				}
-			}
-			if (!over) MaxIt++;
-		}
-
-		for (int jj = 0; jj < edges; jj++)
-		{
-			auto cedge = Edge_Store[jj];
-			if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
-			{
-				bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
-				prev[cedge.to->id] = cedge;
-				NegativeCycle = true;
-				cur_step = 2;
-				return;
-			}
-		}
-
-		int curr = -1;
-		int mxx = -1;
-		for (int ii = 1; ii < nodes; ii++)
-		{
-			int len = 0;
-			//auto cedge = Edge_Store[ii];
-
-			if (bfknown[ii] == INT_MAX) continue;
-			int temp = ii;
-			while (temp)
-			{
-				len++;
-				temp = prev[temp].from->id;
-			}
-			if (len >= mxx)
-			{
-				mxx = len;
-				curr = ii;
-			}
-		}
-		if (curr == -1)
-		{
-			cur_step = 2;
 			return;
 		}
-
-		auto temp = curr;
-		while (temp)
+		next = false;
+		auto cedge = Edge_Store[bfc.j];
+		if (DSU.unite(cedge.from->id, cedge.to->id))
 		{
-			auto e = prev[temp];
-			edge_color(e.edge, true, false);
-			inPath.insert(e.edge);
-			temp = e.from->id;
+			UE_LOG(LogTemp, Log, TEXT("CHOSEN!"));
+			edge_color(cedge.edge, true, true);
 		}
-		cur_step = 2;
+		else
+		{
+			edge_color(cedge.edge, false, false);
+			if (invisible_useless)
+			{
+				cedge.edge->Text->Destroy();
+				cedge.edge->Destroy();
+			}
+		}
+		cur_step--;
+		bfc.j++;
 	}
+
 }
 
 int64 AGraph::min(int64 a, int64 b)
@@ -390,4 +350,8 @@ void AGraph::reset_colors()
 	{
 		node_color(x, false, 0.35f);
 	}
+}
+bool AGraph::e_cmp(EdgeStorage& a, EdgeStorage& b)
+{
+	return a.edge->Text->val < b.edge->Text->val;
 }

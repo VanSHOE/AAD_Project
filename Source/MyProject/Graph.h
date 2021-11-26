@@ -6,6 +6,7 @@
 #include <vector>
 #include <set>
 #include <deque>
+#include <algorithm>
 #include <unordered_set>
 #include "EdgeHead.h"
 #include "GraphNode.h"
@@ -24,6 +25,63 @@ class MYPROJECT_API AGraph : public AActor
 
 public:
 	// Sets default values for this actor's properties
+
+	class UFvan
+	{
+		std::vector<int> parents;
+		std::vector<int> ranks;
+	public:
+	
+		void init(int n)
+		{
+			parents.clear();
+			ranks.clear();
+			parents.resize(n);
+			ranks.resize(n);
+			for (int ii = 0; ii < n; ii++)
+			{
+				parents[ii] = ii;
+				ranks[ii] = 1;
+			}
+		}
+		int find(int a)
+		{
+			if (parents[a] == a)
+			{
+				return a;
+			}
+			return parents[a] = find(parents[a]);
+		}
+
+		bool unite(int a, int b)
+		{
+			int p1 = find(a);
+			int p2 = find(b);
+			if (p1 == p2)
+			{
+				return false;
+			}
+			if (ranks[p1] <= ranks[p2])
+			{
+				parents[p1] = p2;
+				ranks[p2] += ranks[p1];
+			}
+			else
+			{
+				parents[p2] = p1;
+				ranks[p1] += ranks[p2];
+			}
+			return true;
+		}
+		bool allsame()
+		{
+			for (int ii = 1; ii < parents.size(); ii++)
+			{
+				if (find(ii - 1) != find(ii)) return false;
+			}
+			return true;
+		}
+	} DSU;
 	AGraph();
 	int64 min(int64 a, int64 b);
 
@@ -74,7 +132,7 @@ public:
 		AGraphEdge* edge = nullptr;
 		AGraphNode* from = nullptr;
 		AGraphNode* to = nullptr;
-		bool reverse = false;
+		//bool reverse = false;
 		EdgeStorage()
 		{
 			edge = nullptr;
@@ -91,7 +149,7 @@ public:
 	UPROPERTY(VisibleAnywhere)
 		int cur_step = 0;
 //	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float headsize = 25.f;
+	float headsize = 0.f;//25.f;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -121,6 +179,7 @@ public:
 		bool zeroWT = true;
 //	UPROPERTY(VisibleAnywhere)
 		int64 totalFlow = 0;
+		bool e_cmp(EdgeStorage& a, EdgeStorage& b);
 private:
 	int d_idx = 0;
 	bool secondDFS = false;
@@ -233,4 +292,6 @@ private:
 	int64 cFlow = 0;
 	int64 bfsFlow = 0;
 	bool started = false;
+	UPROPERTY(EditAnywhere)
+		bool invisible_useless = false;
 };
