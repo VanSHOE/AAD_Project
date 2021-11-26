@@ -37,7 +37,7 @@ public:
 		int64 nodes;
 	//UPROPERTY(EditAnywhere)
 		bool optimized = false;
-//	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere)
 		bool allowNegative = false;
 	//UPROPERTY(EditAnywhere)
 		int64 mn = 5;
@@ -111,7 +111,7 @@ public:
 	FActorSpawnParameters SpawnParameters;
 	void node_color(AGraphNode* n, bool green, float opacity = 0.75f);
 	void edge_color(AGraphEdge* n, bool green = true, bool shine = true);
-//	AGrid* mat;
+	AGrid* mat;
 //	AGrid* b_mat;
 	UPROPERTY(EditAnywhere)
 		double delay = 0.01f;
@@ -119,7 +119,7 @@ public:
 	void setpq();
 	UPROPERTY(EditAnywhere)
 		bool zeroWT = true;
-	UPROPERTY(VisibleAnywhere)
+//	UPROPERTY(VisibleAnywhere)
 		int64 totalFlow = 0;
 private:
 	int d_idx = 0;

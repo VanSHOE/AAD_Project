@@ -32,8 +32,3 @@ void AEWeight::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AEWeight::Set()
-{
-    Text->SetText(FText::FromString(FString::FromInt(used) + "/" + FString::FromInt(cap) + TEXT(" >>")));
-}
-

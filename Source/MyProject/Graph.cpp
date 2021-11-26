@@ -26,10 +26,12 @@ AGraph::AGraph()
 void AGraph::BeginPlay()
 {
 	Super::BeginPlay();
+	fib_n = mn;
 	groot = nullptr;
 	i = j = k = 0;
 	cur_step = 0;
 	cnodes = 0;
+	last = 0;
 	SpawnParameters.Owner = this;
 	SpawnPosition = GetActorLocation();
 	ox = SpawnPosition.X;
@@ -45,17 +47,43 @@ void AGraph::BeginPlay()
 	g_index = nodes - 1;
 	skip = false;
 	c_val = 0;
-	//me.assign(fib_n + 1, false);
+	me.assign(fib_n + 1, false);
+	mem = false;
 	grid3d.assign(size_x, std::vector<std::vector<AGraphNode*>>(size_y, std::vector<AGraphNode*>(size_z, nullptr)));
+	TArray<AActor*> a;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGrid::StaticClass(), a);
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *a[0]->GetName());
+	mat = Cast<AGrid>(a[0]);
+	mat->size_y = mat->size_x = nodes;
+	mat->setSize();
+	mat->next = true;
 	second.clear();
-	totalFlow = cFlow = bfsFlow = 0;
-	started = false;
+	edges = 0;
+	bfc.reset();
+	bfo.clear();
+	bfo.assign(nodes, INT_MAX);
+	bfknown.clear();
+	bfknown.assign(nodes, INT_MAX);
 	prev.clear();
+	for (int ii = 0; ii < nodes; ii++)
+	{
+		EdgeStorage q;
+		prev.push_back(q);
+	}
+	bfo[0] = 0;
+	bfknown[0] = 0;
+	inPath.clear();
 }
 // Called every frame
 void AGraph::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (last < delay)
+	{
+		last += DeltaTime;
+		return;
+	}
+	last = 0;
 
 	if (cur_step == 0)
 	{
@@ -96,11 +124,12 @@ void AGraph::Tick(float DeltaTime)
 			if (rand() % ProbabilityIn1byX == 0)
 			{
 				grid3d[i][j][k] = GetWorld()->SpawnActor<AGraphNode>(Node, SpawnPosition, FRotator::ZeroRotator, SpawnParameters);
-				grid3d[i][j][k]->val = grid3d[i][j][k]->id = c_val;
+				grid3d[i][j][k]->val = c_val;
 				grid3d[i][j][k]->Text->SetText(FText::FromString(FString::FromInt(c_val++)));
 				grid3d[i][j][k]->my_i = i;
 				grid3d[i][j][k]->my_j = j;
 				grid3d[i][j][k]->my_k = k;
+				grid3d[i][j][k]->id = grid3d[i][j][k]->val;
 				cnodes++;
 				Store.push_back(grid3d[i][j][k]);
 			}
@@ -114,12 +143,20 @@ void AGraph::Tick(float DeltaTime)
 		if (j >= nodes)
 		{
 			i++;
-			j = i + 1;
+			j = 0;
 		}
 		if (i >= nodes - 1)
 		{
 			i = j = 0;
-			cur_step = 4;
+			cur_step = 3;
+			for (int ii = 0; ii < Edge_Store.size(); ii++)
+			{
+				int swap2 = rand() % Edge_Store.size();
+				auto temp = Edge_Store[ii];
+				Edge_Store[ii] = Edge_Store[swap2];
+				Edge_Store[swap2] = temp;
+			}
+			//second.push_back(Store[0]);
 			return;
 		}
 		if (i == j)
@@ -155,32 +192,20 @@ void AGraph::Tick(float DeltaTime)
 				AGraphNode* hit_node = Cast<AGraphNode>(who);
 				if (hit_node->my_i == Store[j]->my_i && hit_node->my_j == Store[j]->my_j && hit_node->my_k == Store[j]->my_k)
 				{
+					q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, Myloc, pointTo, SpawnParameters);
 					auto hlocl = Tarloc;
-					auto hlocme = Myloc;
 					hlocl -= (50.f + headsize) * ForwardVector;
-					hlocme += (headsize) * ForwardVector;
-					q.edge = GetWorld()->SpawnActor<AGraphEdge>(Edge, hlocme, pointTo, SpawnParameters);
 					GetWorld()->SpawnActor<AEdgeHead>(Head, hlocl, pointTo, SpawnParameters);
-					GetWorld()->SpawnActor<AEdgeHead>(Head, hlocme, (-dir).Rotation(), SpawnParameters);
-					FVector scale = { 1, 1, dir.Size() - (100 + 2 * headsize) };
+					FVector scale = { 1, 1, dir.Size() - (100 + headsize) };
 					q.edge->SetActorScale3D(scale);
 					FVector wtpos = Myloc + ForwardVector * (dir.Size() / 2);
 					q.edge->Text = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParameters);
-					q.edge->RText = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParameters);
-					FRotator reverseTextRot = { 0,180,180 };
-					q.edge->Text->AddActorLocalRotation(reverseTextRot.Quaternion());
-					if (!allowNegative)
-						q.edge->Text->cap = rand() % (MaxWT) + (!zeroWT);
-					else
-						q.edge->Text->cap = rand() % (2 * MaxWT) - MaxWT;
-					//q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
-					q.edge->Text->Set();
-					q.edge->RText->cap = 0;
-					q.edge->RText->Set();
-					q.reverse = false;
+					q.edge->Text->val = rand() % (2 * MaxWT);// -MaxWT;
+					q.edge->Text->Text->SetText(FText::FromString(FString::FromInt(q.edge->Text->val)));
 					//	q.edge->dp = GetWorld()->SpawnActor<AEWeight>(WtText, wtpos, pointTo, SpawnParamenters);
 					//	q.edge->dp->val = INT_MAX;
 					//	q.edge->dp->Text->SetText(FText::FromString(TEXT("Inf")));
+
 					q.i = Store[j]->my_i;
 					q.j = Store[j]->my_j;
 					q.k = Store[j]->my_k;
@@ -190,17 +215,14 @@ void AGraph::Tick(float DeltaTime)
 					qq.from = Store[i];
 					qq.to = Store[j];
 					qq.edge = q.edge;
-				//	qq.reverse = 
 					Edge_Store.push_back(qq);
-					//mat->up(qq.from->val, qq.to->val, qq.edge->Text->val);
+
 					edges++;
-					//prev_floyd[qq.from->val][qq.to->val].push_back(qq);
-					q.i = Store[i]->my_i;
-					q.j = Store[i]->my_j;
-				    q.k = Store[i]->my_k;
-					q.nbor = Store[i];
-					q.reverse = true;
-					Store[j]->edges.push_back(q);
+					//q.i = Store[i]->my_i;
+					//q.j = Store[i]->my_j;
+					//q.k = Store[i]->my_k;
+					//q.nbor = Store[i];
+					//Store[j]->edges.push_back(q);
 				}
 			}
 		}
@@ -214,133 +236,112 @@ void AGraph::Tick(float DeltaTime)
 			return;
 		}
 		next = false;
-
-		if (second.size() == 0)
+		if (bfc.j >= edges)
 		{
-			cur_step = 4;
+			bfc.j = 0;
+			bfc.i++;
+			for (int qq = 0; qq < Edge_Store.size(); qq++)
+			{
+				edge_color(Edge_Store[qq].edge, false, false);
+			}
+		}
+		if (bfc.i >= nodes)
+		{
+			cur_step = -2;
 			return;
 		}
-		cur = second[0].node;
-		cFlow = second[0].cur_flow;
-		cur->visited = true;
-		UE_LOG(LogTemp, Warning, TEXT("Visited: %s"), *cur->GetName());
-		node_color(cur, 1);
-		second.pop_front();
-		cur_bfs = 0;
-		cur_step = 3;
-		if (cur->edges.size() == 0) skip = true;
+		auto cedge = Edge_Store[bfc.j];
+		edge_color(cedge.edge, false, true);
+		UE_LOG(LogTemp, Warning, TEXT("%d: %d %d %d"), bfc.i, cedge.from->id, cedge.to->id, cedge.edge->Text->val);
+		/*	if (mat->grid[bfc.i][cedge.from->id] != INT_MAX && mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val < mat->grid[bfc.i][cedge.to->id])
+		{
+			mat->grid[bfc.i][cedge.to->id] = mat->grid[bfc.i][cedge.from->id] + cedge.edge->Text->val;
+			UE_LOG(LogTemp, Warning, TEXT("in"));
+			mat->up(bfc.i, cedge.to->id);
+		}*/
+		UE_LOG(LogTemp, Warning, TEXT("%d < %d and from edge is %d "), bfo[cedge.from->id] + cedge.edge->Text->val, bfo[cedge.to->id], bfo[cedge.from->id]);
+		if (bfo[cedge.from->id] != INT_MAX && bfo[cedge.from->id] + cedge.edge->Text->val < bfo[cedge.to->id])
+		{
+			bfo[cedge.to->id] = bfo[cedge.from->id] + cedge.edge->Text->val;
+			UE_LOG(LogTemp, Warning, TEXT("in"));
+		}
+		if (bfo[cedge.to->id] != INT_MAX)
+		{
+			//mat->grid[bfc.i][cedge.to->id] = bfo[cedge.to->id];
+			mat->up(bfc.i, cedge.to->id, bfo[cedge.to->id]);
+		}
+		bfc.j++;
 	}
 	else if (cur_step == 3)
 	{
-		if (!next && !AUTO && !skip)
+
+		for (int ii = 0; ii < nodes - 1; ii++)
 		{
-			return;
-		}
-		next = false;
-		skip = false;
-		if (cur_bfs >= cur->edges.size())
-		{
-			cur_step--;
-			cur_bfs = 0;
-			return;
-		}
-		UE_LOG(LogTemp, Warning, TEXT("On %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
-		if (cur->edges[cur_bfs].nbor->visited == false && ((cur->edges[cur_bfs].reverse && (cur->edges[cur_bfs].edge->RText->used < cur->edges[cur_bfs].edge->RText->cap)) || (!cur->edges[cur_bfs].reverse && (cur->edges[cur_bfs].edge->Text->used < cur->edges[cur_bfs].edge->Text->cap)))) // TODO Add reverse checking
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Adding %s, child of %s"), *cur->edges[cur_bfs].nbor->GetName(), *cur->GetName());
-			node_color(cur->edges[cur_bfs].nbor, 0);
-			cur->edges[cur_bfs].nbor->visited = true;
-			int64 newflow;
-			if(!cur->edges[cur_bfs].reverse)
-				newflow = min(cFlow, cur->edges[cur_bfs].edge->Text->cap - cur->edges[cur_bfs].edge->Text->used);
-			else
-				newflow = min(cFlow, cur->edges[cur_bfs].edge->RText->cap - cur->edges[cur_bfs].edge->RText->used);
-			if (cur->edges[cur_bfs].nbor == Store.back())
+			bool over = true;
+			for (int jj = 0; jj < edges; jj++)
 			{
-				bfsFlow = newflow;
-				cur_step = 4;
-				//return;
+				auto cedge = Edge_Store[jj];
+				if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
+				{
+					over = false;
+					bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
+					prev[cedge.to->id] = cedge;
+				}
 			}
-			EdgeStorage qqqq;
-			qqqq.from = cur;
-			qqqq.to = cur->edges[cur_bfs].nbor;
-			qqqq.edge = cur->edges[cur_bfs].edge;
-			qqqq.reverse = cur->edges[cur_bfs].reverse;
-			prev[cur->edges[cur_bfs].nbor->id] = qqqq;
-			second.push_back({ cur->edges[cur_bfs].nbor, newflow });
+			if (!over) MaxIt++;
 		}
-		else skip = true;
-		cur_bfs++;
-	}
-	else if (cur_step == 4)
-	{
-		if (!next && !AUTO)
+
+		for (int jj = 0; jj < edges; jj++)
 		{
-			return;
-		}
-		next = false;
-		/*
-		UE_LOG(LogTemp, Warning, TEXT("We are now searching"));
-		for (int ii = 0; ii < Store.size(); ii++)
-		{
-			if (Store[ii]->visited == false)
+			auto cedge = Edge_Store[jj];
+			if (bfknown[cedge.from->id] != INT_MAX && bfknown[cedge.from->id] + cedge.edge->Text->val < bfknown[cedge.to->id])
 			{
-				//cur = Store[ii];
-				second.push_back(Store[ii]);
-				node_color(cur, 1);
+				bfknown[cedge.to->id] = bfknown[cedge.from->id] + cedge.edge->Text->val;
+				prev[cedge.to->id] = cedge;
+				NegativeCycle = true;
 				cur_step = 2;
 				return;
 			}
 		}
-		cur_step = 99;
-		*/
-		reset_colors();
-		for (auto x : Store)
+
+		int curr = -1;
+		int mxx = -1;
+		for (int ii = 1; ii < nodes; ii++)
 		{
-			x->visited = false;
-		}
-		cur_bfs = 0;
-		if (started)
-		{
-			if (bfsFlow == 0)
+			int len = 0;
+			//auto cedge = Edge_Store[ii];
+
+			if (bfknown[ii] == INT_MAX) continue;
+			int temp = ii;
+			while (temp)
 			{
-				cur_step = -99;
-				return;
+				len++;
+				temp = prev[temp].from->id;
 			}
-			auto it = prev[nodes - 1];
-			while (it.edge)
+			if (len >= mxx)
 			{
-				if (it.reverse == false)
-				{
-					it.edge->Text->used += bfsFlow;
-					it.edge->Text->Set();
-					it.edge->RText->used -= bfsFlow;
-					it.edge->RText->Set();
-				}
-				else
-				{
-					it.edge->Text->used -= bfsFlow;
-					it.edge->Text->Set();
-					it.edge->RText->used += bfsFlow;
-					it.edge->RText->Set();
-				}
-				edge_color(it.edge, true, true);
-				if (it.from == Store[0]) break;
-				it = prev[it.from->id];
+				mxx = len;
+				curr = ii;
 			}
 		}
-		started = true;
-		prev.clear();
-		prev.resize(nodes);
-		second.clear();
-		second.push_back({ Store[0], INT_MAX });
-		totalFlow += bfsFlow;
-		bfsFlow = cFlow = 0;
+		if (curr == -1)
+		{
+			cur_step = 2;
+			return;
+		}
+
+		auto temp = curr;
+		while (temp)
+		{
+			auto e = prev[temp];
+			edge_color(e.edge, true, false);
+			inPath.insert(e.edge);
+			temp = e.from->id;
+		}
 		cur_step = 2;
 	}
-	//UE_LOG(LogTemp, Warning, TEXT("GOT OUT w"));
-
 }
+
 int64 AGraph::min(int64 a, int64 b)
 {
 	if (a < b) return a;
